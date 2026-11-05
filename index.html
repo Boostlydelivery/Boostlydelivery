@@ -8,9 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; }
@@ -57,6 +54,7 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="appContainer" class="hidden flex flex-col min-h-screen">
+        <!-- الشريط العلوي -->
         <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="bg-teal-600 p-2 rounded-lg text-white">
@@ -67,33 +65,42 @@
                     <p id="headerSubtitle" class="text-xs text-slate-400"></p>
                 </div>
             </div>
-            <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i> خروج
-            </button>
+            <div class="flex items-center gap-4">
+                <!-- محدد التاريخ العام -->
+                <div class="flex items-center bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                    <label class="text-xs text-slate-400 ml-2">تاريخ العرض:</label>
+                    <input type="date" id="globalDateFilter" onchange="changeGlobalDate()" class="bg-slate-900 text-white text-xs px-2 py-1 rounded outline-none border border-slate-700">
+                </div>
+                <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i> خروج
+                </button>
+            </div>
         </header>
 
+        <!-- المحتوى الداخلي -->
         <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
             
             <!-- لوحة المدير -->
             <div id="adminPanel" class="hidden space-y-6">
+                <!-- إحصائيات سريعة -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">إجمالي الطلبيات</p>
+                            <p class="text-xs text-slate-500 font-semibold">طلبيات اليوم المحددة</p>
                             <h3 id="statTotalOrders" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
                         </div>
                         <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-clipboard-list text-xl"></i></div>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">الطلبيات المنجزة</p>
+                            <p class="text-xs text-slate-500 font-semibold">الطلبيات المنجزة اليوم</p>
                             <h3 id="statDeliveredOrders" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
                         </div>
                         <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl"><i class="fa-solid fa-check-circle text-xl"></i></div>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">إجمالي الأموال المحصلة</p>
+                            <p class="text-xs text-slate-500 font-semibold">إجمالي الأموال المحصلة اليوم</p>
                             <h3 id="statTotalMoney" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
                         </div>
                         <div class="bg-indigo-50 text-indigo-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-xl"></i></div>
@@ -107,16 +114,17 @@
                     </div>
                 </div>
 
+                <!-- تبويبات المدير -->
                 <div class="flex border-b border-slate-300 gap-4">
-                    <button onclick="switchAdminTab('orders')" id="tabBtnOrders" class="pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition">إدارة الطلبيات</button>
+                    <button onclick="switchAdminTab('orders')" id="tabBtnOrders" class="pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition">إدارة الطلبيات والتاريخ</button>
                     <button onclick="switchAdminTab('drivers')" id="tabBtnDrivers" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">إدارة السائقين والأسعار</button>
                     <button onclick="switchAdminTab('financials')" id="tabBtnFinancials" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">المتابعة المالية والتحصيل</button>
                 </div>
 
-                <!-- إدارة الطلبيات -->
+                <!-- قسم إدارة الطلبيات -->
                 <div id="adminOrdersTab" class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة وتوزيعها</h3>
+                        <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة لتاريخ اليوم المختار</h3>
                         <form id="orderForm" onsubmit="addNewOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">اسم الزبون</label>
@@ -135,15 +143,15 @@
                                 <input type="text" id="custAddress" required class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">ثمن الطلبية (درهم)</label>
-                                <input type="number" id="orderPrice" required value="0" min="0" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
-                            </div>
-                            <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">طريقة الدفع</label>
-                                <select id="paymentMethod" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
+                                <select id="paymentMethod" onchange="togglePriceField()" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                                     <option value="COD">الدفع عند الاستلام (COD)</option>
                                     <option value="Online">مدفوع مسبقاً (بطاقة بنكية)</option>
                                 </select>
+                            </div>
+                            <div id="priceFieldContainer">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">ثمن الطلبية (درهم)</label>
+                                <input type="number" id="orderPrice" value="0" min="0" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">تعيين لعامل التوصيل</label>
@@ -159,9 +167,10 @@
                         </form>
                     </div>
 
+                    <!-- جدول الطلبيات -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                            <h3 class="font-bold text-lg text-slate-900">متابعة كافة الطلبيات المسجلة</h3>
+                            <h3 class="font-bold text-lg text-slate-900">طلبيات تاريخ: <span id="displaySelectedDateText" class="text-teal-600"></span></h3>
                             <input type="text" id="adminSearch" placeholder="بحث بالزبون أو الهاتف..." onkeyup="filterAdminOrders()" class="px-3 py-1.5 border rounded-xl text-sm outline-none">
                         </div>
                         <div class="overflow-x-auto">
@@ -171,7 +180,7 @@
                                         <th class="p-4">الزبون / الهاتف</th>
                                         <th class="p-4">المنطقة والعنوان</th>
                                         <th class="p-4">السائق المكلف</th>
-                                        <th class="p-4">المبلغ / الدفع</th>
+                                        <th class="p-4">المبلغ / طريقة الدفع</th>
                                         <th class="p-4">الحالة</th>
                                         <th class="p-4">حالة التحصيل المالي</th>
                                         <th class="p-4">الإجراءات</th>
@@ -183,7 +192,7 @@
                     </div>
                 </div>
 
-                <!-- إدارة السائقين والمناطق -->
+                <!-- قسم إدارة السائقين والمناطق -->
                 <div id="adminDriversTab" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4">إضافة عامل توصيل جديد</h3>
@@ -212,7 +221,7 @@
                                 <input type="text" id="zoneName" required placeholder="مثال: مركز المدينة..." class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">ثمن التوصيل (درهم)</label>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">ثمن التوصيل لعامل التوصيل (درهم)</label>
                                 <input type="number" id="zonePrice" required min="0" value="20" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl transition">حفظ المنطقة</button>
@@ -226,9 +235,74 @@
 
                 <!-- المتابعة المالية -->
                 <div id="adminFinancialsTab" class="hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-lg text-slate-900 mb-4">ملخص التحصيل المالي لكل عامل توصيل</h3>
-                        <div id="driversFinancialSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+                        <h3 class="font-bold text-lg text-slate-900">المتابعة المالية المتقدمة وتصفية الحسابات</h3>
+                        
+                        <!-- فلتر المتابعة المالية -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">اختر عامل التوصيل</label>
+                                <select id="finSelectDriver" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">نترة التقرير / الفترة</label>
+                                <select id="finPeriodType" onchange="togglePeriodInputs()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
+                                    <option value="day">يوم محدد</option>
+                                    <option value="range">فترة (من تاريخ إلى تاريخ)</option>
+                                    <option value="all">كل الطلبيات غير المسددة</option>
+                                </select>
+                            </div>
+                            <div id="finSingleDateDiv">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
+                                <input type="date" id="finDateInput" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
+                            </div>
+                            <div id="finRangeDiv" class="hidden sm:col-span-3 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">من تاريخ</label>
+                                    <input type="date" id="finStartDate" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">إلى تاريخ</label>
+                                    <input type="date" id="finEndDate" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ملخص أرباح السائق -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
+                                <p class="text-xs text-indigo-600 font-bold">أرباح السائق (رسوم التوصيل)</p>
+                                <h4 id="finDriverEarnings" class="text-2xl font-black text-indigo-900 mt-1">0 درهم</h4>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                                <p class="text-xs text-emerald-600 font-bold">المبالغ النقدية المحصلة (COD)</p>
+                                <h4 id="finDriverCollectedCash" class="text-2xl font-black text-emerald-900 mt-1">0 درهم</h4>
+                            </div>
+                            <div class="bg-teal-50 border border-teal-100 p-4 rounded-xl">
+                                <p class="text-xs text-teal-600 font-bold">صافي المطلوب تسليمه للإدارة</p>
+                                <h4 id="finDriverNetToAdmin" class="text-2xl font-black text-teal-900 mt-1">0 درهم</h4>
+                            </div>
+                        </div>
+
+                        <!-- جدول الطلبيات المنجزة لغير المسددة للسائق المختار -->
+                        <div>
+                            <h4 class="font-bold text-md text-slate-800 mb-3">الطلبيات المنجزة (تتطلب تسليم الأموال وتحديث حالة الدفع):</h4>
+                            <div class="overflow-x-auto border rounded-xl">
+                                <table class="w-full text-right border-collapse text-sm">
+                                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">التاريخ</th>
+                                            <th class="p-3">الزبون والمنطقة</th>
+                                            <th class="p-3">نوع الدفع والثمن</th>
+                                            <th class="p-3">ربح السائق (التوصيل)</th>
+                                            <th class="p-3">حالة الدفع للإدارة</th>
+                                            <th class="p-3">الإجراء</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="driverFinancialOrdersTable" class="divide-y divide-slate-200"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -237,7 +311,7 @@
             <div id="driverPanel" class="hidden space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-xs text-slate-500 font-semibold">طلبياتي اليوم</p>
+                        <p class="text-xs text-slate-500 font-semibold">طلبياتي في التاريخ المحدد</p>
                         <h3 id="driverStatTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
@@ -245,14 +319,14 @@
                         <h3 id="driverStatDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-xs text-slate-500 font-semibold">المطلوب تسليمه (للإدارة)</p>
-                        <h3 id="driverStatMoneyToDeliver" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
+                        <p class="text-xs text-slate-500 font-semibold">أرباحي من التوصيل اليوم</p>
+                        <h3 id="driverStatEarnings" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                        <h3 class="font-bold text-lg text-slate-900">طلبياتي المخصصة</h3>
+                        <h3 class="font-bold text-lg text-slate-900">طلبياتي المخصصة لتاريخ: <span id="driverDisplayDate" class="text-teal-600"></span></h3>
                     </div>
                     <div id="driverOrdersList" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
@@ -278,7 +352,7 @@
                 </select>
             </div>
             <div id="postponeDateDiv" class="hidden">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">التاريخ الجديد للتوصيل</label>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">التاريخ الجديد لعرض الطلبية</label>
                 <input type="date" id="modalPostponeDate" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
             </div>
             <div>
@@ -292,34 +366,42 @@
         </div>
     </div>
 
-    <!-- JavaScript البرمجي المتصل بـ Firebase Realtime Database -->
+    <!-- JavaScript البرمجي -->
     <script>
-        const firebaseConfig = {
-            databaseURL: "https://boostlydelivery-6174f-default-rtdb.firebaseio.com/"
+        // ضبط التاريخ الافتراضي اليوم بصيغة YYYY-MM-DD
+        const getTodayString = () => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+
+        let selectedGlobalDate = getTodayString();
+        document.getElementById('globalDateFilter').value = selectedGlobalDate;
+        document.getElementById('finDateInput').value = selectedGlobalDate;
+        document.getElementById('finStartDate').value = selectedGlobalDate;
+        document.getElementById('finEndDate').value = selectedGlobalDate;
 
         let appData = {
-            drivers: {},
-            zones: {},
-            orders: {}
+            drivers: JSON.parse(localStorage.getItem('delivery_drivers')) || {},
+            zones: JSON.parse(localStorage.getItem('delivery_zones')) || {},
+            orders: JSON.parse(localStorage.getItem('delivery_orders')) || {}
         };
 
         let currentUser = null;
 
-        // مزامنة فورية مع سحابة Firebase
-        db.ref('/').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                appData.drivers = data.drivers || {};
-                appData.zones = data.zones || {};
-                appData.orders = data.orders || {};
-            } else {
-                appData = { drivers: {}, zones: {}, orders: {} };
-            }
+        function saveToStorage() {
+            localStorage.setItem('delivery_drivers', JSON.stringify(appData.drivers));
+            localStorage.setItem('delivery_zones', JSON.stringify(appData.zones));
+            localStorage.setItem('delivery_orders', JSON.stringify(appData.orders));
             updateUI();
-        });
+        }
+
+        function changeGlobalDate() {
+            selectedGlobalDate = document.getElementById('globalDateFilter').value;
+            updateUI();
+        }
 
         function toggleLoginInputs() {
             const role = document.getElementById('loginRole').value;
@@ -348,11 +430,11 @@
             const pin = document.getElementById('loginPin').value;
 
             if (role === 'admin') {
-                if (pin === '1234' || pin === 'admin') {
+                if (pin === '246813579') {
                     currentUser = { role: 'admin', name: 'المدير العام' };
                     initAppSession();
                 } else {
-                    alert('رمز دخول المدير غير صحيح! (الرمز الافتراضي: 1234)');
+                    alert('رمز دخول المدير غير صحيح!');
                 }
             } else {
                 const driverId = document.getElementById('loginDriverName').value;
@@ -378,7 +460,7 @@
                 document.getElementById('adminPanel').classList.remove('hidden');
                 document.getElementById('driverPanel').classList.add('hidden');
                 document.getElementById('headerTitle').innerText = 'لوحة تحكم المدير العام';
-                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي (سحابي)';
+                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي';
                 populateAdminDropdowns();
             } else {
                 document.getElementById('adminPanel').classList.add('hidden');
@@ -397,34 +479,40 @@
             toggleLoginInputs();
         }
 
+        function togglePriceField() {
+            const method = document.getElementById('paymentMethod').value;
+            const container = document.getElementById('priceFieldContainer');
+            const priceInput = document.getElementById('orderPrice');
+            if (method === 'Online') {
+                container.classList.add('hidden');
+                priceInput.value = 0;
+            } else {
+                container.classList.remove('hidden');
+            }
+        }
+
         function addDriver(e) {
             e.preventDefault();
             const name = document.getElementById('newDriverName').value;
             const pin = document.getElementById('newDriverPin').value;
-            db.ref('drivers').push().set({ name, pin }, (error) => {
-                if (error) {
-                    alert('حدث خطأ أثناء الإضافة!');
-                } else {
-                    document.getElementById('newDriverName').value = '';
-                    document.getElementById('newDriverPin').value = '';
-                    alert('تمت إضافة عامل التوصيل وحفظه سحابياً بنجاح');
-                }
-            });
+            const dId = 'driver_' + Date.now();
+            appData.drivers[dId] = { name, pin };
+            saveToStorage();
+            document.getElementById('newDriverName').value = '';
+            document.getElementById('newDriverPin').value = '';
+            alert('تمت إضافة عامل التوصيل بنجاح');
         }
 
         function addZone(e) {
             e.preventDefault();
             const name = document.getElementById('zoneName').value;
             const price = parseFloat(document.getElementById('zonePrice').value);
-            db.ref('zones').push().set({ name, price }, (error) => {
-                if (error) {
-                    alert('حدث خطأ أثناء حفظ المنطقة!');
-                } else {
-                    document.getElementById('zoneName').value = '';
-                    document.getElementById('zonePrice').value = '20';
-                    alert('تمت إضافة منطقة التوصيل سحابياً بنجاح');
-                }
-            });
+            const zId = 'zone_' + Date.now();
+            appData.zones[zId] = { name, price };
+            saveToStorage();
+            document.getElementById('zoneName').value = '';
+            document.getElementById('zonePrice').value = '20';
+            alert('تمت إضافة منطقة التوصيل بنجاح');
         }
 
         function populateAdminDropdowns() {
@@ -432,14 +520,18 @@
             zoneSelect.innerHTML = '';
             Object.keys(appData.zones).forEach(zId => {
                 const zone = appData.zones[zId];
-                zoneSelect.innerHTML += `<option value="${zId}">${zone.name} (${zone.price} درهم)</option>`;
+                zoneSelect.innerHTML += `<option value="${zId}">${zone.name} (عمولة التوصيل: ${zone.price} درهم)</option>`;
             });
 
             const driverSelect = document.getElementById('assignedDriver');
             driverSelect.innerHTML = '';
+            const finDriverSelect = document.getElementById('finSelectDriver');
+            finDriverSelect.innerHTML = '<option value="all">جميع العمال</option>';
+
             Object.keys(appData.drivers).forEach(dId => {
                 const driver = appData.drivers[dId];
                 driverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
+                finDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
             });
         }
 
@@ -449,8 +541,8 @@
             const phone = document.getElementById('custPhone').value;
             const zoneId = document.getElementById('orderZone').value;
             const address = document.getElementById('custAddress').value;
-            const price = parseFloat(document.getElementById('orderPrice').value);
             const paymentMethod = document.getElementById('paymentMethod').value;
+            const price = paymentMethod === 'Online' ? 0 : parseFloat(document.getElementById('orderPrice').value);
             const driverId = document.getElementById('assignedDriver').value;
             const notes = document.getElementById('orderNotes').value;
 
@@ -459,7 +551,8 @@
                 return;
             }
 
-            const newOrder = {
+            const oId = 'order_' + Date.now();
+            appData.orders[oId] = {
                 customerName,
                 phone,
                 zoneId,
@@ -470,16 +563,15 @@
                 notes: notes || 'لا توجد ملاحظات',
                 status: 'قيد الانتظار',
                 financialStatus: 'غير مدفوعة',
+                orderDate: selectedGlobalDate, // تاريخ ظهور الطلبية
                 postponeDate: '',
                 createdAt: new Date().toLocaleDateString('ar-MA')
             };
 
-            db.ref('orders').push().set(newOrder, (error) => {
-                if (!error) {
-                    document.getElementById('orderForm').reset();
-                    alert('تم إرسال الطلبية بنجاح إلى السائق');
-                }
-            });
+            saveToStorage();
+            document.getElementById('orderForm').reset();
+            togglePriceField();
+            alert('تم إرسال الطلبية بنجاح إلى السائق لتاريخ اليوم المحدد');
         }
 
         function switchAdminTab(tab) {
@@ -500,7 +592,26 @@
             } else if (tab === 'financials') {
                 document.getElementById('adminFinancialsTab').classList.remove('hidden');
                 document.getElementById('tabBtnFinancials').className = 'pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition';
+                renderFinancialSummary();
             }
+        }
+
+        function togglePeriodInputs() {
+            const period = document.getElementById('finPeriodType').value;
+            const singleDiv = document.getElementById('finSingleDateDiv');
+            const rangeDiv = document.getElementById('finRangeDiv');
+
+            if (period === 'day') {
+                singleDiv.classList.remove('hidden');
+                rangeDiv.classList.add('hidden');
+            } else if (period === 'range') {
+                singleDiv.classList.add('hidden');
+                rangeDiv.classList.remove('hidden');
+            } else {
+                singleDiv.classList.add('hidden');
+                rangeDiv.classList.add('hidden');
+            }
+            renderFinancialSummary();
         }
 
         function updateUI() {
@@ -517,6 +628,8 @@
         }
 
         function renderAdminLists() {
+            document.getElementById('displaySelectedDateText').innerText = selectedGlobalDate;
+
             const driversList = document.getElementById('driversListContainer');
             driversList.innerHTML = '';
             Object.keys(appData.drivers).forEach(dId => {
@@ -528,7 +641,7 @@
             zonesList.innerHTML = '';
             Object.keys(appData.zones).forEach(zId => {
                 const z = appData.zones[zId];
-                zonesList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${z.name}</span><div class="flex items-center gap-3"><span class="text-teal-600 font-bold">${z.price} درهم</span><button onclick="deleteZone('${zId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div></div>`;
+                zonesList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${z.name}</span><div class="flex items-center gap-3"><span class="text-teal-600 font-bold">${z.price} درهم للتوصيل</span><button onclick="deleteZone('${zId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div></div>`;
             });
 
             const tbody = document.getElementById('adminOrdersTableBody');
@@ -538,6 +651,10 @@
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
+                
+                // عرض الطلبية إذا كان تاريخها المختار هو تاريخ العرض الحالي
+                if (o.orderDate !== selectedGlobalDate) return;
+
                 totalOrders++;
                 if (o.driverId) activeDriversSet.add(o.driverId);
                 if (o.status === 'تم التوصيل') deliveredCount++;
@@ -545,9 +662,8 @@
                 const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
                 const driver = appData.drivers[o.driverId] || { name: 'غير مسند' };
 
-                if (o.status === 'تم التوصيل') {
-                    let orderIncome = (o.paymentMethod === 'COD' ? o.price : 0) + zone.price;
-                    totalMoneyCollected += orderIncome;
+                if (o.status === 'تم التوصيل' && o.paymentMethod === 'COD') {
+                    totalMoneyCollected += o.price;
                 }
 
                 const isPaid = o.financialStatus === 'تم الدفع';
@@ -561,7 +677,7 @@
                             <div class="text-xs text-slate-500"><a href="tel:${o.phone}" class="text-teal-600 hover:underline"><i class="fa-solid fa-phone"></i> ${o.phone}</a></div>
                         </td>
                         <td class="p-4">
-                            <div class="font-semibold text-slate-800">${zone.name}</div>
+                            <div class="font-semibold text-slate-800">${zone.name} (${zone.price} د.م للتوصيل)</div>
                             <div class="text-xs text-slate-500">${o.address}</div>
                         </td>
                         <td class="p-4 font-medium text-slate-700">${driver.name}</td>
@@ -590,68 +706,94 @@
             document.getElementById('statDeliveredOrders').innerText = deliveredCount;
             document.getElementById('statTotalMoney').innerText = `${totalMoneyCollected} درهم`;
             document.getElementById('statActiveDrivers').innerText = activeDriversSet.size;
-
-            renderFinancialSummary();
         }
 
         function renderFinancialSummary() {
-            const container = document.getElementById('driversFinancialSummary');
-            container.innerHTML = '';
+            const driverId = document.getElementById('finSelectDriver').value;
+            const periodType = document.getElementById('finPeriodType').value;
+            const singleDate = document.getElementById('finDateInput').value;
+            const startDate = document.getElementById('finStartDate').value;
+            const endDate = document.getElementById('finEndDate').value;
 
-            Object.keys(appData.drivers).forEach(dId => {
-                const driver = appData.drivers[dId];
-                let driverOrdersCount = 0;
-                let driverCashToCollect = 0;
+            let totalEarnings = 0;
+            let totalCollectedCash = 0;
+            let netToAdmin = 0;
 
-                Object.keys(appData.orders).forEach(oId => {
-                    const o = appData.orders[oId];
-                    if (o.driverId === dId && o.status === 'تم التوصيل' && o.financialStatus !== 'تم الدفع') {
-                        driverOrdersCount++;
-                        const zone = appData.zones[o.zoneId] || { price: 0 };
-                        if (o.paymentMethod === 'COD') {
-                            driverCashToCollect += (o.price + zone.price);
-                        } else if (o.paymentMethod === 'Online') {
-                            driverCashToCollect += zone.price;
-                        }
-                    }
-                });
-
-                container.innerHTML += `
-                    <div class="bg-slate-50 border p-5 rounded-2xl flex flex-col justify-between">
-                        <div>
-                            <h4 class="font-bold text-slate-900 text-lg mb-1">${driver.name}</h4>
-                            <p class="text-xs text-slate-500 mb-4">الطلبيات المنجزة غير المسددة: ${driverOrdersCount}</p>
-                        </div>
-                        <div class="border-t pt-3 flex justify-between items-center">
-                            <span class="text-sm font-semibold text-slate-600">المبلغ المطلوب تسليمه:</span>
-                            <span class="text-xl font-black text-indigo-600">${driverCashToCollect} درهم</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function renderDriverPanel() {
-            const container = document.getElementById('driverOrdersList');
-            container.innerHTML = '';
-
-            let totalDriverOrders = 0, doneCount = 0, moneyToDeliver = 0;
+            const tableBody = document.getElementById('driverFinancialOrdersTable');
+            tableBody.innerHTML = '';
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
-                if (o.driverId === currentUser.id) {
+                if (o.status !== 'تم التوصيل') return;
+                if (driverId !== 'all' && o.driverId !== driverId) return;
+
+                // تصفية حسب الفترة الزمنية
+                if (periodType === 'day' && o.orderDate !== singleDate) return;
+                if (periodType === 'range') {
+                    if (o.orderDate < startDate || o.orderDate > endDate) return;
+                }
+
+                const zone = appData.zones[o.zoneId] || { price: 0, name: 'منطقة محذوفة' };
+                const driver = appData.drivers[o.driverId] || { name: 'غير معروف' };
+                const deliveryFee = zone.price; // ربح السائق
+
+                if (o.financialStatus !== 'تم الدفع') {
+                    totalEarnings += deliveryFee;
+                    if (o.paymentMethod === 'COD') {
+                        totalCollectedCash += o.price;
+                        netToAdmin += (o.price - deliveryFee); // المبلغ الصافي للشركة بعد خصم أجر السائق
+                    } else {
+                        // طلبية مدفوعة أونلاين، الشركة قبضت الثمن، والسائق قبض حق التوصيل أو يستحقه
+                        netToAdmin -= deliveryFee; 
+                    }
+                }
+
+                const isPaid = o.financialStatus === 'تم الدفع';
+                const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 text-xs text-slate-500">${o.orderDate}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-900">${o.customerName}</div>
+                            <div class="text-xs text-slate-500">${zone.name} - السائق: ${driver.name}</div>
+                        </td>
+                        <td class="p-3">
+                            <span class="font-bold">${o.price} درهم</span>
+                            <div class="text-xs text-slate-500">${o.paymentMethod === 'Online' ? 'أونلاين' : 'عند الاستلام'}</div>
+                        </td>
+                        <td class="p-3 font-bold text-indigo-600">${deliveryFee} درهم</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-bold ${badgeColor}">${o.financialStatus}</span></td>
+                        <td class="p-3">
+                            <button onclick="toggleFinancialStatus('${oId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition">
+                                تبديل حالة الدفع
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('finDriverEarnings').innerText = `${totalEarnings} درهم`;
+            document.getElementById('finDriverCollectedCash').innerText = `${totalCollectedCash} درهم`;
+            document.getElementById('finDriverNetToAdmin').innerText = `${netToAdmin} درهم`;
+        }
+
+        function renderDriverPanel() {
+            document.getElementById('driverDisplayDate').innerText = selectedGlobalDate;
+            const container = document.getElementById('driverOrdersList');
+            container.innerHTML = '';
+
+            let totalDriverOrders = 0, doneCount = 0, driverEarnings = 0;
+
+            Object.keys(appData.orders).forEach(oId => {
+                const o = appData.orders[oId];
+                if (o.driverId === currentUser.id && o.orderDate === selectedGlobalDate) {
                     totalDriverOrders++;
                     const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
                     
                     if (o.status === 'تم التوصيل') {
                         doneCount++;
-                        if (o.financialStatus !== 'تم الدفع') {
-                            if (o.paymentMethod === 'COD') {
-                                moneyToDeliver += (o.price + zone.price);
-                            } else {
-                                moneyToDeliver += zone.price;
-                            }
-                        }
+                        driverEarnings += zone.price; // ربح السائق من التوصيل
                     }
 
                     const isPaid = o.financialStatus === 'تم الدفع';
@@ -665,11 +807,11 @@
                                     <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700">${o.status}</span>
                                 </div>
                                 <div class="space-y-1 text-sm text-slate-600">
-                                    <p><i class="fa-solid fa-location-dot text-teal-600 ml-1"></i> <strong>المنطقة:</strong> ${zone.name} (${zone.price} درهم)</p>
+                                    <p><i class="fa-solid fa-location-dot text-teal-600 ml-1"></i> <strong>المنطقة:</strong> ${zone.name} (عمولة التوصيل: <span class="text-indigo-600 font-bold">${zone.price} درهم</span>)</p>
                                     <p><i class="fa-solid fa-map-pin text-rose-600 ml-1"></i> <strong>العنوان:</strong> ${o.address}</p>
-                                    <p><i class="fa-solid fa-money-bill-wave text-emerald-600 ml-1"></i> <strong>المبلغ:</strong> ${o.price} درهم (${o.paymentMethod === 'Online' ? 'مدفوع إلكترونياً' : 'الدفع عند الاستلام'})</p>
+                                    <p><i class="fa-solid fa-money-bill-wave text-emerald-600 ml-1"></i> <strong>المبلغ المطلوب من الزبون:</strong> ${o.price} درهم (${o.paymentMethod === 'Online' ? 'مدفوع مسبقاً' : 'الدفع عند الاستلام'})</p>
                                     <p><i class="fa-solid fa-note-sticky text-amber-600 ml-1"></i> <strong>ملاحظات:</strong> ${o.notes}</p>
-                                    ${o.postponeDate ? `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-calendar"></i> مؤجلة لتاريخ: ${o.postponeDate}</p>` : ''}
+                                    ${o.postponeDate ? `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-calendar"></i> مؤجلة لعرضها في تاريخ: ${o.postponeDate}</p>` : ''}
                                 </div>
                             </div>
 
@@ -694,7 +836,7 @@
 
             document.getElementById('driverStatTotal').innerText = totalDriverOrders;
             document.getElementById('driverStatDone').innerText = doneCount;
-            document.getElementById('driverStatMoneyToDeliver').innerText = `${moneyToDeliver} درهم`;
+            document.getElementById('driverStatEarnings').innerText = `${driverEarnings} درهم`;
         }
 
         function openStatusModal(orderId) {
@@ -722,41 +864,50 @@
             const postponeDate = document.getElementById('modalPostponeDate').value;
             const note = document.getElementById('modalOrderNote').value;
 
-            const updates = {
-                status: status,
-                postponeDate: status === 'مؤجلة' ? postponeDate : '',
-                notes: note ? `تحديث: ${note}` : appData.orders[orderId].notes
-            };
+            appData.orders[orderId].status = status;
+            if (status === 'مؤجلة' && postponeDate) {
+                appData.orders[orderId].postponeDate = postponeDate;
+                appData.orders[orderId].orderDate = postponeDate; // نقل الطلبية لتظهر في التاريخ الجديد المحدد
+            } else {
+                appData.orders[orderId].postponeDate = '';
+            }
 
-            db.ref(`orders/${orderId}`).update(updates, (error) => {
-                if (!error) {
-                    closeStatusModal();
-                    alert('تم تحديث حالة الطلبية بنجاح');
-                }
-            });
+            if (note) {
+                appData.orders[orderId].notes += ` | تحديث: ${note}`;
+            }
+
+            saveToStorage();
+            closeStatusModal();
+            alert('تم تحديث حالة الطلبية بنجاح');
         }
 
         function toggleFinancialStatus(orderId) {
             const currentStatus = appData.orders[orderId].financialStatus;
-            const newStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
-            db.ref(`orders/${orderId}`).update({ financialStatus: newStatus });
+            appData.orders[orderId].financialStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
+            saveToStorage();
+            if (currentUser.role === 'admin') {
+                renderFinancialSummary();
+            }
         }
 
         function deleteOrder(orderId) {
             if (confirm('هل أنت متأكد من حذف هذه الطلبية نهائياً؟')) {
-                db.ref(`orders/${orderId}`).remove();
+                delete appData.orders[orderId];
+                saveToStorage();
             }
         }
 
         function deleteDriver(driverId) {
             if (confirm('هل أنت متأكد من حذف حساب السائق؟')) {
-                db.ref(`drivers/${driverId}`).remove();
+                delete appData.drivers[driverId];
+                saveToStorage();
             }
         }
 
         function deleteZone(zoneId) {
             if (confirm('هل أنت متأكد من حذف هذه المنطقة؟')) {
-                db.ref(`zones/${zoneId}`).remove();
+                delete appData.zones[zoneId];
+                saveToStorage();
             }
         }
 
