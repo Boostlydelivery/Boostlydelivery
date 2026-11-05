@@ -57,7 +57,6 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="appContainer" class="hidden flex flex-col min-h-screen">
-        <!-- الشريط العلوي -->
         <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="bg-teal-600 p-2 rounded-lg text-white">
@@ -69,7 +68,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <!-- محدد التاريخ العام -->
                 <div class="flex items-center bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
                     <label class="text-xs text-slate-400 ml-2">تاريخ العرض:</label>
                     <input type="date" id="globalDateFilter" onchange="changeGlobalDate()" class="bg-slate-900 text-white text-xs px-2 py-1 rounded outline-none border border-slate-700">
@@ -80,16 +78,14 @@
             </div>
         </header>
 
-        <!-- المحتوى الداخلي -->
         <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
             
             <!-- لوحة المدير -->
             <div id="adminPanel" class="hidden space-y-6">
-                <!-- إحصائيات سريعة -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">طلبيات اليوم المحددة</p>
+                            <p class="text-xs text-slate-500 font-semibold">طلبيات التاريخ المحدد</p>
                             <h3 id="statTotalOrders" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
                         </div>
                         <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-clipboard-list text-xl"></i></div>
@@ -110,21 +106,21 @@
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">عمال التوصيل النشطين</p>
-                            <h3 id="statActiveDrivers" class="text-2xl font-bold text-teal-600 mt-1">0</h3>
+                            <p class="text-xs text-slate-500 font-semibold">المرتجعات للتجميع للشركة</p>
+                            <h3 id="statReturnsCount" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
                         </div>
-                        <div class="bg-teal-50 text-teal-600 p-3 rounded-xl"><i class="fa-solid fa-users text-xl"></i></div>
+                        <div class="bg-rose-50 text-rose-600 p-3 rounded-xl"><i class="fa-solid fa-rotate-left text-xl"></i></div>
                     </div>
                 </div>
 
-                <!-- تبويبات المدير -->
-                <div class="flex border-b border-slate-300 gap-4">
+                <div class="flex border-b border-slate-300 gap-4 flex-wrap">
                     <button onclick="switchAdminTab('orders')" id="tabBtnOrders" class="pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition">إدارة الطلبيات والتاريخ</button>
+                    <button onclick="switchAdminTab('returns')" id="tabBtnReturns" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">أرشيف المرتجعات للشركة</button>
                     <button onclick="switchAdminTab('drivers')" id="tabBtnDrivers" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">إدارة السائقين والأسعار</button>
                     <button onclick="switchAdminTab('financials')" id="tabBtnFinancials" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">المتابعة المالية والتحصيل</button>
                 </div>
 
-                <!-- قسم إدارة الطلبيات -->
+                <!-- إدارة الطلبيات والتاريخ -->
                 <div id="adminOrdersTab" class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة لتاريخ اليوم المختار</h3>
@@ -135,7 +131,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">رقم الهاتف</label>
-                                <input type="text" id="custPhone" required class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
+                                <input type="text" id="custPhone" required class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500" placeholder="06XXXXXXXX">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">المنطقة</label>
@@ -170,11 +166,18 @@
                         </form>
                     </div>
 
-                    <!-- جدول الطلبيات -->
+                    <!-- جدول الطلبيات مع فلتر السائق -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                            <h3 class="font-bold text-lg text-slate-900">طلبيات تاريخ: <span id="displaySelectedDateText" class="text-teal-600"></span></h3>
-                            <input type="text" id="adminSearch" placeholder="بحث بالزبون أو الهاتف..." onkeyup="filterAdminOrders()" class="px-3 py-1.5 border rounded-xl text-sm outline-none">
+                        <div class="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                            <div class="flex items-center gap-3">
+                                <h3 class="font-bold text-lg text-slate-900">طلبيات تاريخ: <span id="displaySelectedDateText" class="text-teal-600"></span></h3>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select id="adminFilterDriver" onchange="renderAdminLists()" class="px-3 py-1.5 border rounded-xl text-sm outline-none bg-slate-50 font-semibold">
+                                    <option value="all">جميع السائقين</option>
+                                </select>
+                                <input type="text" id="adminSearch" placeholder="بحث بالزبون أو الهاتف..." onkeyup="filterAdminOrders()" class="px-3 py-1.5 border rounded-xl text-sm outline-none">
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-right border-collapse">
@@ -195,7 +198,32 @@
                     </div>
                 </div>
 
-                <!-- قسم إدارة السائقين والمناطق -->
+                <!-- أرشيف المرتجعات للشركة -->
+                <div id="adminReturnsTab" class="hidden space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-slate-900">الطلبيات الملغاة والمستبدلة المرتجعة للشركة</h3>
+                            <p class="text-xs text-slate-500">هنا يتم تجميع الطلبيات التي تم إرجاعها لاستلامها وإعادتها لمقر الشركة</p>
+                        </div>
+                        <div class="overflow-x-auto border rounded-xl">
+                            <table class="w-full text-right border-collapse text-sm">
+                                <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-3">التاريخ</th>
+                                        <th class="p-3">الزبون / الهاتف</th>
+                                        <th class="p-3">العنوان والمنطقة</th>
+                                        <th class="p-3">السائق</th>
+                                        <th class="p-3">سبب الإرجاع / الحالة</th>
+                                        <th class="p-3">إجراء نهائي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminReturnsTableBody" class="divide-y divide-slate-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إدارة السائقين والمناطق -->
                 <div id="adminDriversTab" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4">إضافة عامل توصيل جديد</h3>
@@ -241,7 +269,6 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
                         <h3 class="font-bold text-lg text-slate-900">المتابعة المالية المتقدمة وتصفية الحسابات</h3>
                         
-                        <!-- فلتر المتابعة المالية -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">اختر عامل التوصيل</label>
@@ -271,7 +298,6 @@
                             </div>
                         </div>
 
-                        <!-- ملخص أرباح السائق -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
                                 <p class="text-xs text-indigo-600 font-bold">أرباح السائق (رسوم التوصيل)</p>
@@ -287,7 +313,6 @@
                             </div>
                         </div>
 
-                        <!-- جدول الطلبيات المنجزة لغير المسددة للسائق المختار -->
                         <div>
                             <h4 class="font-bold text-md text-slate-800 mb-3">الطلبيات المنجزة (تتطلب تسليم الأموال وتحديث حالة الدفع):</h4>
                             <div class="overflow-x-auto border rounded-xl">
@@ -312,7 +337,7 @@
 
             <!-- لوحة عامل التوصيل -->
             <div id="driverPanel" class="hidden space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                         <p class="text-xs text-slate-500 font-semibold">طلبياتي في التاريخ المحدد</p>
                         <h3 id="driverStatTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
@@ -322,8 +347,12 @@
                         <h3 id="driverStatDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-xs text-slate-500 font-semibold">أرباحي من التوصيل اليوم</p>
-                        <h3 id="driverStatEarnings" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
+                        <p class="text-xs text-slate-500 font-semibold">الطلبيات الملغاة</p>
+                        <h3 id="driverStatCanceled" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <p class="text-xs text-slate-500 font-semibold">المبلغ المطلوب تسليمه للإدارة</p>
+                        <h3 id="driverStatMoneyToDeliver" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
                     </div>
                 </div>
 
@@ -348,10 +377,11 @@
                 <select id="modalOrderStatus" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500" onchange="togglePostponeDate()">
                     <option value="تم التوصيل">تم التوصيل بنجاح</option>
                     <option value="مؤجلة">مؤجلة لتاريخ آخر</option>
+                    <option value="الزبون لا يجيب">الزبون لا يجيب (تأجيل آلي للغد)</option>
                     <option value="ملغاة">ملغاة</option>
-                    <option value="الزبون لا يجيب">الزبون لا يجيب</option>
                     <option value="طلبية خاطئة">طلبية خاطئة</option>
                     <option value="استبدال">استبدال</option>
+                    <option value="تم إرجاعها">تم إرجاعها للمرتجعات</option>
                 </select>
             </div>
             <div id="postponeDateDiv" class="hidden">
@@ -369,18 +399,25 @@
         </div>
     </div>
 
-    <!-- JavaScript المتصل بـ Firebase Realtime Database -->
+    <!-- JavaScript البرمجي المتصل بـ Firebase Realtime Database -->
     <script>
-        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             databaseURL: "https://boostlydelivery-6174f-default-rtdb.firebaseio.com/"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ضبط التاريخ الافتراضي اليوم بصيغة YYYY-MM-DD
         const getTodayString = () => {
             const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const getTomorrowString = () => {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
@@ -396,20 +433,21 @@
         let appData = {
             drivers: {},
             zones: {},
-            orders: {}
+            orders: {},
+            returns: {}
         };
 
         let currentUser = null;
 
-        // مزامنة فورية وسحابية مع Firebase Realtime Database
         db.ref('/').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 appData.drivers = data.drivers || {};
                 appData.zones = data.zones || {};
                 appData.orders = data.orders || {};
+                appData.returns = data.returns || {};
             } else {
-                appData = { drivers: {}, zones: {}, orders: {} };
+                appData = { drivers: {}, zones: {}, orders: {}, returns: {} };
             }
             updateUI();
         });
@@ -507,6 +545,16 @@
             }
         }
 
+        function formatWhatsAppNumber(phone) {
+            let cleaned = phone.replace(/\D/g, '');
+            if (cleaned.startsWith('0')) {
+                cleaned = '212' + cleaned.substring(1);
+            } else if (!cleaned.startsWith('212')) {
+                cleaned = '212' + cleaned;
+            }
+            return cleaned;
+        }
+
         function addDriver(e) {
             e.preventDefault();
             const name = document.getElementById('newDriverName').value;
@@ -545,11 +593,14 @@
             driverSelect.innerHTML = '';
             const finDriverSelect = document.getElementById('finSelectDriver');
             finDriverSelect.innerHTML = '<option value="all">جميع العمال</option>';
+            const filterDriverSelect = document.getElementById('adminFilterDriver');
+            filterDriverSelect.innerHTML = '<option value="all">جميع السائقين</option>';
 
             Object.keys(appData.drivers).forEach(dId => {
                 const driver = appData.drivers[dId];
                 driverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
                 finDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
+                filterDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
             });
         }
 
@@ -596,16 +647,22 @@
 
         function switchAdminTab(tab) {
             document.getElementById('adminOrdersTab').classList.add('hidden');
+            document.getElementById('adminReturnsTab').classList.add('hidden');
             document.getElementById('adminDriversTab').classList.add('hidden');
             document.getElementById('adminFinancialsTab').classList.add('hidden');
             
             document.getElementById('tabBtnOrders').className = 'pb-3 font-semibold text-slate-500 hover:text-teal-600 transition border-b-0';
+            document.getElementById('tabBtnReturns').className = 'pb-3 font-semibold text-slate-500 hover:text-teal-600 transition border-b-0';
             document.getElementById('tabBtnDrivers').className = 'pb-3 font-semibold text-slate-500 hover:text-teal-600 transition border-b-0';
             document.getElementById('tabBtnFinancials').className = 'pb-3 font-semibold text-slate-500 hover:text-teal-600 transition border-b-0';
 
             if (tab === 'orders') {
                 document.getElementById('adminOrdersTab').classList.remove('hidden');
                 document.getElementById('tabBtnOrders').className = 'pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition';
+            } else if (tab === 'returns') {
+                document.getElementById('adminReturnsTab').classList.remove('hidden');
+                document.getElementById('tabBtnReturns').className = 'pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition';
+                renderReturnsArchive();
             } else if (tab === 'drivers') {
                 document.getElementById('adminDriversTab').classList.remove('hidden');
                 document.getElementById('tabBtnDrivers').className = 'pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition';
@@ -642,6 +699,7 @@
             if (currentUser.role === 'admin') {
                 populateAdminDropdowns();
                 renderAdminLists();
+                renderReturnsArchive();
             } else {
                 renderDriverPanel();
             }
@@ -649,6 +707,7 @@
 
         function renderAdminLists() {
             document.getElementById('displaySelectedDateText').innerText = selectedGlobalDate;
+            const filterDriverId = document.getElementById('adminFilterDriver').value;
 
             const driversList = document.getElementById('driversListContainer');
             driversList.innerHTML = '';
@@ -667,14 +726,13 @@
             const tbody = document.getElementById('adminOrdersTableBody');
             tbody.innerHTML = '';
             let totalOrders = 0, deliveredCount = 0, totalMoneyCollected = 0;
-            let activeDriversSet = new Set();
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
                 if (o.orderDate !== selectedGlobalDate) return;
+                if (filterDriverId !== 'all' && o.driverId !== filterDriverId) return;
 
                 totalOrders++;
-                if (o.driverId) activeDriversSet.add(o.driverId);
                 if (o.status === 'تم التوصيل') deliveredCount++;
 
                 const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
@@ -687,12 +745,16 @@
                 const isPaid = o.financialStatus === 'تم الدفع';
                 const rowBgColor = isPaid ? 'bg-emerald-50/50' : 'bg-white';
                 const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                const waPhone = formatWhatsAppNumber(o.phone);
 
                 tbody.innerHTML += `
                     <tr class="${rowBgColor} border-b hover:bg-slate-50/80 transition">
                         <td class="p-4">
                             <div class="font-bold text-slate-900">${o.customerName}</div>
-                            <div class="text-xs text-slate-500"><a href="tel:${o.phone}" class="text-teal-600 hover:underline"><i class="fa-solid fa-phone"></i> ${o.phone}</a></div>
+                            <div class="text-xs text-slate-500 flex gap-2 mt-1">
+                                <a href="tel:${o.phone}" class="text-teal-600 hover:underline"><i class="fa-solid fa-phone"></i> ${o.phone}</a>
+                                <a href="https://wa.me/${waPhone}" target="_blank" class="text-emerald-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> واتساب</a>
+                            </div>
                         </td>
                         <td class="p-4">
                             <div class="font-semibold text-slate-800">${zone.name} (${zone.price} د.م للتوصيل)</div>
@@ -723,7 +785,41 @@
             document.getElementById('statTotalOrders').innerText = totalOrders;
             document.getElementById('statDeliveredOrders').innerText = deliveredCount;
             document.getElementById('statTotalMoney').innerText = `${totalMoneyCollected} درهم`;
-            document.getElementById('statActiveDrivers').innerText = activeDriversSet.size;
+            document.getElementById('statReturnsCount').innerText = Object.keys(appData.returns).length;
+        }
+
+        function renderReturnsArchive() {
+            const tbody = document.getElementById('adminReturnsTableBody');
+            tbody.innerHTML = '';
+            const returns = appData.returns || {};
+
+            Object.keys(returns).forEach(rId => {
+                const r = returns[rId];
+                const driver = appData.drivers[r.driverId] || { name: 'غير معروف' };
+                const zone = appData.zones[r.zoneId] || { name: 'منطقة محذوفة' };
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 text-xs text-slate-500">${r.orderDate}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-900">${r.customerName}</div>
+                            <div class="text-xs text-slate-500">${r.phone}</div>
+                        </td>
+                        <td class="p-3 text-xs text-slate-600">${zone.name} - ${r.address}</td>
+                        <td class="p-3 font-semibold text-slate-700">${driver.name}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">${r.status}</span>
+                            <div class="text-xs text-slate-500 mt-1">${r.notes}</div>
+                        </td>
+                        <td class="p-3">
+                            <button onclick="removeReturnItem('${rId}')" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                                <i class="fa-solid fa-check"></i> تم الاستلام وإعادة للشركة
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('statReturnsCount').innerText = Object.keys(returns).length;
         }
 
         function renderFinancialSummary() {
@@ -799,7 +895,7 @@
             const container = document.getElementById('driverOrdersList');
             container.innerHTML = '';
 
-            let totalDriverOrders = 0, doneCount = 0, driverEarnings = 0;
+            let totalDriverOrders = 0, doneCount = 0, canceledCount = 0, moneyToDeliver = 0;
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
@@ -809,18 +905,33 @@
                     
                     if (o.status === 'تم التوصيل') {
                         doneCount++;
-                        driverEarnings += zone.price;
+                        if (o.paymentMethod === 'COD') {
+                            moneyToDeliver += o.price;
+                        }
+                    } else if (o.status === 'ملغاة' || o.status === 'طلبية خاطئة' || o.status === 'استبدال' || o.status === 'تم إرجاعها') {
+                        canceledCount++;
                     }
 
+                    const isCanceled = o.status === 'ملغاة' || o.status === 'طلبية خاطئة' || o.status === 'استبدال' || o.status === 'تم إرجاعها';
                     const isPaid = o.financialStatus === 'تم الدفع';
-                    const cardBorder = isPaid ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-200 bg-white';
+                    
+                    let cardClasses = "border rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4 ";
+                    if (isCanceled) {
+                        cardClasses += "border-rose-500 bg-rose-50/20";
+                    } else if (isPaid) {
+                        cardClasses += "border-emerald-500 bg-emerald-50/30";
+                    } else {
+                        cardClasses += "border-slate-200 bg-white";
+                    }
+
+                    const waPhone = formatWhatsAppNumber(o.phone);
 
                     container.innerHTML += `
-                        <div class="${cardBorder} border rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="${cardClasses}">
                             <div>
                                 <div class="flex justify-between items-start mb-2">
                                     <h4 class="font-bold text-slate-900 text-lg">${o.customerName}</h4>
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700">${o.status}</span>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isCanceled ? 'bg-rose-100 text-rose-800' : 'bg-teal-50 text-teal-700'}">${o.status}</span>
                                 </div>
                                 <div class="space-y-1 text-sm text-slate-600">
                                     <p><i class="fa-solid fa-location-dot text-teal-600 ml-1"></i> <strong>المنطقة:</strong> ${zone.name} (عمولة التوصيل: <span class="text-indigo-600 font-bold">${zone.price} درهم</span>)</p>
@@ -835,7 +946,7 @@
                                 <a href="tel:${o.phone}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
                                     <i class="fa-solid fa-phone"></i> اتصال
                                 </a>
-                                <a href="https://wa.me/${o.phone}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
+                                <a href="https://wa.me/${waPhone}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
                                     <i class="fa-brands fa-whatsapp"></i> واتساب
                                 </a>
                                 <a href="https://maps.google.com/?q=${encodeURIComponent(zone.name + ' ' + o.address)}" target="_blank" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
@@ -852,7 +963,8 @@
 
             document.getElementById('driverStatTotal').innerText = totalDriverOrders;
             document.getElementById('driverStatDone').innerText = doneCount;
-            document.getElementById('driverStatEarnings').innerText = `${driverEarnings} درهم`;
+            document.getElementById('driverStatCanceled').innerText = canceledCount;
+            document.getElementById('driverStatMoneyToDeliver').innerText = `${moneyToDeliver} درهم`;
         }
 
         function openStatusModal(orderId) {
@@ -876,23 +988,42 @@
 
         function saveOrderStatus() {
             const orderId = document.getElementById('modalOrderId').value;
-            const status = document.getElementById('modalOrderStatus').value;
+            let status = document.getElementById('modalOrderStatus').value;
             const postponeDate = document.getElementById('modalPostponeDate').value;
             const note = document.getElementById('modalOrderNote').value;
 
-            const updates = {
-                status: status
-            };
+            const order = appData.orders[orderId];
+            const updates = {};
 
-            if (status === 'مؤجلة' && postponeDate) {
+            if (status === 'الزبون لا يجيب') {
+                status = 'مؤجلة';
+                const tomorrow = getTomorrowString();
+                updates.status = status;
+                updates.orderDate = tomorrow; // نقل الطلبية آلياً لليوم الموالي
+                updates.notes = order.notes + ` | ملاحظة: الزبون لا يجيب، وتم التأجيل آلياً للغد. ${note ? note : ''}`;
+            } else if (status === 'مؤجلة' && postponeDate) {
+                updates.status = status;
                 updates.postponeDate = postponeDate;
                 updates.orderDate = postponeDate;
+                if (note) updates.notes = order.notes + ` | تحديث: ${note}`;
             } else {
-                updates.postponeDate = '';
+                updates.status = status;
+                if (note) updates.notes = order.notes + ` | تحديث: ${note}`;
             }
 
-            if (note) {
-                updates.notes = appData.orders[orderId].notes + ` | تحديث: ${note}`;
+            // إذا كانت الطلبية ملغاة أو مستبدلة أو تم إرجاعها، يتم إرسال نسخة لأرشيف المرتجعات للشركة
+            if (status === 'ملغاة' || status === 'طلبية خاطئة' || status === 'استبدال' || status === 'تم إرجاعها') {
+                const returnItem = {
+                    customerName: order.customerName,
+                    phone: order.phone,
+                    zoneId: order.zoneId,
+                    address: order.address,
+                    driverId: order.driverId,
+                    status: status,
+                    notes: note || order.notes,
+                    orderDate: order.orderDate
+                };
+                db.ref('returns').push().set(returnItem);
             }
 
             db.ref(`orders/${orderId}`).update(updates, (error) => {
@@ -901,6 +1032,12 @@
                     alert('تم تحديث حالة الطلبية سحابياً بنجاح');
                 }
             });
+        }
+
+        function removeReturnItem(returnId) {
+            if (confirm('هل أنت متأكد من استلام هذه الطلبية وإزالتها من الأرشيف لإعادتها للشركة؟')) {
+                db.ref(`returns/${returnId}`).remove();
+            }
         }
 
         function toggleFinancialStatus(orderId) {
