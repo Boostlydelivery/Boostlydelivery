@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة وتتبع عمال التوصيل الاحترافي</title>
+    <title>نظام إدارة وتتبع عمال التوصيل الاحترافي (سحابي)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; }
@@ -245,7 +248,7 @@
                                 <select id="finSelectDriver" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white"></select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">نترة التقرير / الفترة</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">فترة التقرير</label>
                                 <select id="finPeriodType" onchange="togglePeriodInputs()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
                                     <option value="day">يوم محدد</option>
                                     <option value="range">فترة (من تاريخ إلى تاريخ)</option>
@@ -366,8 +369,15 @@
         </div>
     </div>
 
-    <!-- JavaScript البرمجي -->
+    <!-- JavaScript المتصل بـ Firebase Realtime Database -->
     <script>
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            databaseURL: "https://boostlydelivery-6174f-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         // ضبط التاريخ الافتراضي اليوم بصيغة YYYY-MM-DD
         const getTodayString = () => {
             const d = new Date();
@@ -384,19 +394,25 @@
         document.getElementById('finEndDate').value = selectedGlobalDate;
 
         let appData = {
-            drivers: JSON.parse(localStorage.getItem('delivery_drivers')) || {},
-            zones: JSON.parse(localStorage.getItem('delivery_zones')) || {},
-            orders: JSON.parse(localStorage.getItem('delivery_orders')) || {}
+            drivers: {},
+            zones: {},
+            orders: {}
         };
 
         let currentUser = null;
 
-        function saveToStorage() {
-            localStorage.setItem('delivery_drivers', JSON.stringify(appData.drivers));
-            localStorage.setItem('delivery_zones', JSON.stringify(appData.zones));
-            localStorage.setItem('delivery_orders', JSON.stringify(appData.orders));
+        // مزامنة فورية وسحابية مع Firebase Realtime Database
+        db.ref('/').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                appData.drivers = data.drivers || {};
+                appData.zones = data.zones || {};
+                appData.orders = data.orders || {};
+            } else {
+                appData = { drivers: {}, zones: {}, orders: {} };
+            }
             updateUI();
-        }
+        });
 
         function changeGlobalDate() {
             selectedGlobalDate = document.getElementById('globalDateFilter').value;
@@ -460,7 +476,7 @@
                 document.getElementById('adminPanel').classList.remove('hidden');
                 document.getElementById('driverPanel').classList.add('hidden');
                 document.getElementById('headerTitle').innerText = 'لوحة تحكم المدير العام';
-                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي';
+                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي (سحابي)';
                 populateAdminDropdowns();
             } else {
                 document.getElementById('adminPanel').classList.add('hidden');
@@ -495,24 +511,26 @@
             e.preventDefault();
             const name = document.getElementById('newDriverName').value;
             const pin = document.getElementById('newDriverPin').value;
-            const dId = 'driver_' + Date.now();
-            appData.drivers[dId] = { name, pin };
-            saveToStorage();
-            document.getElementById('newDriverName').value = '';
-            document.getElementById('newDriverPin').value = '';
-            alert('تمت إضافة عامل التوصيل بنجاح');
+            db.ref('drivers').push().set({ name, pin }, (error) => {
+                if (!error) {
+                    document.getElementById('newDriverName').value = '';
+                    document.getElementById('newDriverPin').value = '';
+                    alert('تمت إضافة عامل التوصيل سحابياً بنجاح');
+                }
+            });
         }
 
         function addZone(e) {
             e.preventDefault();
             const name = document.getElementById('zoneName').value;
             const price = parseFloat(document.getElementById('zonePrice').value);
-            const zId = 'zone_' + Date.now();
-            appData.zones[zId] = { name, price };
-            saveToStorage();
-            document.getElementById('zoneName').value = '';
-            document.getElementById('zonePrice').value = '20';
-            alert('تمت إضافة منطقة التوصيل بنجاح');
+            db.ref('zones').push().set({ name, price }, (error) => {
+                if (!error) {
+                    document.getElementById('zoneName').value = '';
+                    document.getElementById('zonePrice').value = '20';
+                    alert('تمت إضافة منطقة التوصيل سحابياً بنجاح');
+                }
+            });
         }
 
         function populateAdminDropdowns() {
@@ -551,8 +569,7 @@
                 return;
             }
 
-            const oId = 'order_' + Date.now();
-            appData.orders[oId] = {
+            const newOrder = {
                 customerName,
                 phone,
                 zoneId,
@@ -563,15 +580,18 @@
                 notes: notes || 'لا توجد ملاحظات',
                 status: 'قيد الانتظار',
                 financialStatus: 'غير مدفوعة',
-                orderDate: selectedGlobalDate, // تاريخ ظهور الطلبية
+                orderDate: selectedGlobalDate,
                 postponeDate: '',
                 createdAt: new Date().toLocaleDateString('ar-MA')
             };
 
-            saveToStorage();
-            document.getElementById('orderForm').reset();
-            togglePriceField();
-            alert('تم إرسال الطلبية بنجاح إلى السائق لتاريخ اليوم المحدد');
+            db.ref('orders').push().set(newOrder, (error) => {
+                if (!error) {
+                    document.getElementById('orderForm').reset();
+                    togglePriceField();
+                    alert('تم إرسال الطلبية سحابياً بنجاح إلى السائق');
+                }
+            });
         }
 
         function switchAdminTab(tab) {
@@ -651,8 +671,6 @@
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
-                
-                // عرض الطلبية إذا كان تاريخها المختار هو تاريخ العرض الحالي
                 if (o.orderDate !== selectedGlobalDate) return;
 
                 totalOrders++;
@@ -727,7 +745,6 @@
                 if (o.status !== 'تم التوصيل') return;
                 if (driverId !== 'all' && o.driverId !== driverId) return;
 
-                // تصفية حسب الفترة الزمنية
                 if (periodType === 'day' && o.orderDate !== singleDate) return;
                 if (periodType === 'range') {
                     if (o.orderDate < startDate || o.orderDate > endDate) return;
@@ -735,16 +752,15 @@
 
                 const zone = appData.zones[o.zoneId] || { price: 0, name: 'منطقة محذوفة' };
                 const driver = appData.drivers[o.driverId] || { name: 'غير معروف' };
-                const deliveryFee = zone.price; // ربح السائق
+                const deliveryFee = zone.price;
 
                 if (o.financialStatus !== 'تم الدفع') {
                     totalEarnings += deliveryFee;
                     if (o.paymentMethod === 'COD') {
                         totalCollectedCash += o.price;
-                        netToAdmin += (o.price - deliveryFee); // المبلغ الصافي للشركة بعد خصم أجر السائق
+                        netToAdmin += (o.price - deliveryFee);
                     } else {
-                        // طلبية مدفوعة أونلاين، الشركة قبضت الثمن، والسائق قبض حق التوصيل أو يستحقه
-                        netToAdmin -= deliveryFee; 
+                        netToAdmin -= deliveryFee;
                     }
                 }
 
@@ -793,7 +809,7 @@
                     
                     if (o.status === 'تم التوصيل') {
                         doneCount++;
-                        driverEarnings += zone.price; // ربح السائق من التوصيل
+                        driverEarnings += zone.price;
                     }
 
                     const isPaid = o.financialStatus === 'تم الدفع';
@@ -864,50 +880,54 @@
             const postponeDate = document.getElementById('modalPostponeDate').value;
             const note = document.getElementById('modalOrderNote').value;
 
-            appData.orders[orderId].status = status;
+            const updates = {
+                status: status
+            };
+
             if (status === 'مؤجلة' && postponeDate) {
-                appData.orders[orderId].postponeDate = postponeDate;
-                appData.orders[orderId].orderDate = postponeDate; // نقل الطلبية لتظهر في التاريخ الجديد المحدد
+                updates.postponeDate = postponeDate;
+                updates.orderDate = postponeDate;
             } else {
-                appData.orders[orderId].postponeDate = '';
+                updates.postponeDate = '';
             }
 
             if (note) {
-                appData.orders[orderId].notes += ` | تحديث: ${note}`;
+                updates.notes = appData.orders[orderId].notes + ` | تحديث: ${note}`;
             }
 
-            saveToStorage();
-            closeStatusModal();
-            alert('تم تحديث حالة الطلبية بنجاح');
+            db.ref(`orders/${orderId}`).update(updates, (error) => {
+                if (!error) {
+                    closeStatusModal();
+                    alert('تم تحديث حالة الطلبية سحابياً بنجاح');
+                }
+            });
         }
 
         function toggleFinancialStatus(orderId) {
             const currentStatus = appData.orders[orderId].financialStatus;
-            appData.orders[orderId].financialStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
-            saveToStorage();
-            if (currentUser.role === 'admin') {
-                renderFinancialSummary();
-            }
+            const newStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
+            db.ref(`orders/${orderId}`).update({ financialStatus: newStatus }, (error) => {
+                if (!error && currentUser.role === 'admin') {
+                    renderFinancialSummary();
+                }
+            });
         }
 
         function deleteOrder(orderId) {
             if (confirm('هل أنت متأكد من حذف هذه الطلبية نهائياً؟')) {
-                delete appData.orders[orderId];
-                saveToStorage();
+                db.ref(`orders/${orderId}`).remove();
             }
         }
 
         function deleteDriver(driverId) {
             if (confirm('هل أنت متأكد من حذف حساب السائق؟')) {
-                delete appData.drivers[driverId];
-                saveToStorage();
+                db.ref(`drivers/${driverId}`).remove();
             }
         }
 
         function deleteZone(zoneId) {
             if (confirm('هل أنت متأكد من حذف هذه المنطقة؟')) {
-                delete appData.zones[zoneId];
-                saveToStorage();
+                db.ref(`zones/${zoneId}`).remove();
             }
         }
 
