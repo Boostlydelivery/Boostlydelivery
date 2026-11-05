@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; }
@@ -54,7 +57,6 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="appContainer" class="hidden flex flex-col min-h-screen">
-        <!-- الشريط العلوي -->
         <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="bg-teal-600 p-2 rounded-lg text-white">
@@ -70,12 +72,10 @@
             </button>
         </header>
 
-        <!-- المحتوى الداخلي -->
         <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
             
             <!-- لوحة المدير -->
             <div id="adminPanel" class="hidden space-y-6">
-                <!-- إحصائيات سريعة -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
@@ -107,14 +107,13 @@
                     </div>
                 </div>
 
-                <!-- تبويبات المدير -->
                 <div class="flex border-b border-slate-300 gap-4">
                     <button onclick="switchAdminTab('orders')" id="tabBtnOrders" class="pb-3 font-bold border-b-2 border-teal-600 text-teal-600 transition">إدارة الطلبيات</button>
                     <button onclick="switchAdminTab('drivers')" id="tabBtnDrivers" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">إدارة السائقين والأسعار</button>
                     <button onclick="switchAdminTab('financials')" id="tabBtnFinancials" class="pb-3 font-semibold text-slate-500 hover:text-teal-600 transition">المتابعة المالية والتحصيل</button>
                 </div>
 
-                <!-- قسم إدارة الطلبيات -->
+                <!-- إدارة الطلبيات -->
                 <div id="adminOrdersTab" class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة وتوزيعها</h3>
@@ -160,7 +159,6 @@
                         </form>
                     </div>
 
-                    <!-- جدول الطلبيات -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
                             <h3 class="font-bold text-lg text-slate-900">متابعة كافة الطلبيات المسجلة</h3>
@@ -185,7 +183,7 @@
                     </div>
                 </div>
 
-                <!-- قسم إدارة السائقين والمناطق -->
+                <!-- إدارة السائقين والمناطق -->
                 <div id="adminDriversTab" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4">إضافة عامل توصيل جديد</h3>
@@ -226,7 +224,7 @@
                     </div>
                 </div>
 
-                <!-- قسم المتابعة المالية -->
+                <!-- المتابعة المالية -->
                 <div id="adminFinancialsTab" class="hidden space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <h3 class="font-bold text-lg text-slate-900 mb-4">ملخص التحصيل المالي لكل عامل توصيل</h3>
@@ -294,22 +292,34 @@
         </div>
     </div>
 
-    <!-- JavaScript البرمجي -->
+    <!-- JavaScript البرمجي المتصل بـ Firebase Realtime Database -->
     <script>
+        const firebaseConfig = {
+            databaseURL: "https://boostlydelivery-6174f-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let appData = {
-            drivers: JSON.parse(localStorage.getItem('delivery_drivers')) || {},
-            zones: JSON.parse(localStorage.getItem('delivery_zones')) || {},
-            orders: JSON.parse(localStorage.getItem('delivery_orders')) || {}
+            drivers: {},
+            zones: {},
+            orders: {}
         };
 
         let currentUser = null;
 
-        function saveToStorage() {
-            localStorage.setItem('delivery_drivers', JSON.stringify(appData.drivers));
-            localStorage.setItem('delivery_zones', JSON.stringify(appData.zones));
-            localStorage.setItem('delivery_orders', JSON.stringify(appData.orders));
+        // مزامنة فورية مع سحابة Firebase
+        db.ref('/').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                appData.drivers = data.drivers || {};
+                appData.zones = data.zones || {};
+                appData.orders = data.orders || {};
+            } else {
+                appData = { drivers: {}, zones: {}, orders: {} };
+            }
             updateUI();
-        }
+        });
 
         function toggleLoginInputs() {
             const role = document.getElementById('loginRole').value;
@@ -342,7 +352,7 @@
                     currentUser = { role: 'admin', name: 'المدير العام' };
                     initAppSession();
                 } else {
-                    alert('رمز دخول المدير غير صحيح! (الرمز: 1234)');
+                    alert('رمز دخول المدير غير صحيح! (الرمز الافتراضي: 1234)');
                 }
             } else {
                 const driverId = document.getElementById('loginDriverName').value;
@@ -368,7 +378,7 @@
                 document.getElementById('adminPanel').classList.remove('hidden');
                 document.getElementById('driverPanel').classList.add('hidden');
                 document.getElementById('headerTitle').innerText = 'لوحة تحكم المدير العام';
-                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي';
+                document.getElementById('headerSubtitle').innerText = 'إدارة الطلبيات، السائقين، والتحصيل المالي (سحابي)';
                 populateAdminDropdowns();
             } else {
                 document.getElementById('adminPanel').classList.add('hidden');
@@ -391,24 +401,30 @@
             e.preventDefault();
             const name = document.getElementById('newDriverName').value;
             const pin = document.getElementById('newDriverPin').value;
-            const dId = 'driver_' + Date.now();
-            appData.drivers[dId] = { name, pin };
-            saveToStorage();
-            document.getElementById('newDriverName').value = '';
-            document.getElementById('newDriverPin').value = '';
-            alert('تمت إضافة عامل التوصيل بنجاح');
+            db.ref('drivers').push().set({ name, pin }, (error) => {
+                if (error) {
+                    alert('حدث خطأ أثناء الإضافة!');
+                } else {
+                    document.getElementById('newDriverName').value = '';
+                    document.getElementById('newDriverPin').value = '';
+                    alert('تمت إضافة عامل التوصيل وحفظه سحابياً بنجاح');
+                }
+            });
         }
 
         function addZone(e) {
             e.preventDefault();
             const name = document.getElementById('zoneName').value;
             const price = parseFloat(document.getElementById('zonePrice').value);
-            const zId = 'zone_' + Date.now();
-            appData.zones[zId] = { name, price };
-            saveToStorage();
-            document.getElementById('zoneName').value = '';
-            document.getElementById('zonePrice').value = '20';
-            alert('تمت إضافة منطقة التوصيل بنجاح');
+            db.ref('zones').push().set({ name, price }, (error) => {
+                if (error) {
+                    alert('حدث خطأ أثناء حفظ المنطقة!');
+                } else {
+                    document.getElementById('zoneName').value = '';
+                    document.getElementById('zonePrice').value = '20';
+                    alert('تمت إضافة منطقة التوصيل سحابياً بنجاح');
+                }
+            });
         }
 
         function populateAdminDropdowns() {
@@ -443,8 +459,7 @@
                 return;
             }
 
-            const oId = 'order_' + Date.now();
-            appData.orders[oId] = {
+            const newOrder = {
                 customerName,
                 phone,
                 zoneId,
@@ -459,9 +474,12 @@
                 createdAt: new Date().toLocaleDateString('ar-MA')
             };
 
-            saveToStorage();
-            document.getElementById('orderForm').reset();
-            alert('تم إرسال الطلبية بنجاح إلى السائق');
+            db.ref('orders').push().set(newOrder, (error) => {
+                if (!error) {
+                    document.getElementById('orderForm').reset();
+                    alert('تم إرسال الطلبية بنجاح إلى السائق');
+                }
+            });
         }
 
         function switchAdminTab(tab) {
@@ -651,7 +669,7 @@
                                     <p><i class="fa-solid fa-map-pin text-rose-600 ml-1"></i> <strong>العنوان:</strong> ${o.address}</p>
                                     <p><i class="fa-solid fa-money-bill-wave text-emerald-600 ml-1"></i> <strong>المبلغ:</strong> ${o.price} درهم (${o.paymentMethod === 'Online' ? 'مدفوع إلكترونياً' : 'الدفع عند الاستلام'})</p>
                                     <p><i class="fa-solid fa-note-sticky text-amber-600 ml-1"></i> <strong>ملاحظات:</strong> ${o.notes}</p>
-                                    ${o.postponeDate ? `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-calendar"></i> مؤجلة لـ: ${o.postponeDate}</p>` : ''}
+                                    ${o.postponeDate ? `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-calendar"></i> مؤجلة لتاريخ: ${o.postponeDate}</p>` : ''}
                                 </div>
                             </div>
 
@@ -704,41 +722,41 @@
             const postponeDate = document.getElementById('modalPostponeDate').value;
             const note = document.getElementById('modalOrderNote').value;
 
-            appData.orders[orderId].status = status;
-            appData.orders[orderId].postponeDate = status === 'مؤجلة' ? postponeDate : '';
-            if (note) {
-                appData.orders[orderId].notes += ` | تحديث: ${note}`;
-            }
+            const updates = {
+                status: status,
+                postponeDate: status === 'مؤجلة' ? postponeDate : '',
+                notes: note ? `تحديث: ${note}` : appData.orders[orderId].notes
+            };
 
-            saveToStorage();
-            closeStatusModal();
-            alert('تم تحديث حالة الطلبية بنجاح');
+            db.ref(`orders/${orderId}`).update(updates, (error) => {
+                if (!error) {
+                    closeStatusModal();
+                    alert('تم تحديث حالة الطلبية بنجاح');
+                }
+            });
         }
 
         function toggleFinancialStatus(orderId) {
             const currentStatus = appData.orders[orderId].financialStatus;
-            appData.orders[orderId].financialStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
-            saveToStorage();
+            const newStatus = currentStatus === 'تم الدفع' ? 'غير مدفوعة' : 'تم الدفع';
+            db.ref(`orders/${orderId}`).update({ financialStatus: newStatus });
         }
 
         function deleteOrder(orderId) {
             if (confirm('هل أنت متأكد من حذف هذه الطلبية نهائياً؟')) {
-                delete appData.orders[orderId];
-                saveToStorage();
+                db.ref(`orders/${orderId}`).remove();
             }
         }
 
         function deleteDriver(driverId) {
             if (confirm('هل أنت متأكد من حذف حساب السائق؟')) {
-                delete appData.drivers[driverId];
-                saveToStorage();
+                db.ref(`drivers/${driverId}`).remove();
             }
         }
 
         function deleteZone(zoneId) {
             if (confirm('هل أنت متأكد من حذف هذه المنطقة؟')) {
-                delete appData.zones[zoneId];
-                saveToStorage();
+                db.ref(`zones/${zoneId}`).remove();
             }
         }
 
