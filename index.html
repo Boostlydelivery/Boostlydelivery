@@ -563,15 +563,17 @@
             alert('مفتاح التفعيل غير صحيح أو غير متوافق مع هذا الجهاز!');
         }
 
-        const connRef = db.database().ref('.info/connected');
+        const connRef = db.ref('.info/connected');
         connRef.on('value', (snap) => {
             const statusDiv = document.getElementById('connectionStatus');
-            if (snap.val() === true) {
-                statusDiv.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-400 flex items-center gap-1";
-                statusDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> متصل';
-            } else {
-                statusDiv.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/20 text-amber-400 flex items-center gap-1";
-                statusDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> غير متصل';
+            if (statusDiv) {
+                if (snap.val() === true) {
+                    statusDiv.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-400 flex items-center gap-1";
+                    statusDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> متصل';
+                } else {
+                    statusDiv.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/20 text-amber-400 flex items-center gap-1";
+                    statusDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> غير متصل';
+                }
             }
         });
 
@@ -631,6 +633,23 @@
                 return;
             }
 
+            // الاستماع الدائم للبيانات من Firebase
+            db.ref('/').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    appData.drivers = data.drivers || {};
+                    appData.zones = data.zones || {};
+                    appData.orders = data.orders || {};
+                    appData.returns = data.returns || {};
+                } else {
+                    appData = { drivers: {}, zones: {}, orders: {}, returns: {} };
+                }
+                
+                // تحديث القوائم المدخلة حالاً فور جلبها من السحابة
+                toggleLoginInputs();
+                updateUI();
+            });
+
             const savedSession = localStorage.getItem('delivery_saved_session');
             if (savedSession) {
                 try {
@@ -643,6 +662,8 @@
                 } catch (e) {
                     localStorage.removeItem('delivery_saved_session');
                 }
+            } else {
+                toggleLoginInputs();
             }
         });
 
@@ -651,23 +672,11 @@
             if (expiry && Date.now() <= parseInt(expiry)) {
                 initAppSession();
             } else {
+                document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('currentDeviceIdDisplay').value = deviceId;
                 document.getElementById('activationScreen').classList.remove('hidden');
             }
         }
-
-        db.ref('/').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                appData.drivers = data.drivers || {};
-                appData.zones = data.zones || {};
-                appData.orders = data.orders || {};
-                appData.returns = data.returns || {};
-            } else {
-                appData = { drivers: {}, zones: {}, orders: {}, returns: {} };
-            }
-            updateUI();
-        });
 
         function changeGlobalDate() {
             selectedGlobalDate = document.getElementById('globalDateFilter').value;
@@ -720,7 +729,7 @@
             } else {
                 const driverId = document.getElementById('loginDriverName').value;
                 if (!driverId || !appData.drivers[driverId]) {
-                    alert('الرجاء اختيار عامل توصيل صحيح');
+                    alert('الرجاء اختيار عامل توصيل صحيح أو إضافة عمال جدد من لوحة المدير');
                     return;
                 }
                 const driver = appData.drivers[driverId];
@@ -760,6 +769,7 @@
             localStorage.removeItem('delivery_saved_session');
             currentUser = null;
             document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('activationScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('loginPin').value = '';
             document.getElementById('rememberMe').checked = false;
@@ -835,24 +845,37 @@
 
         function populateAdminDropdowns() {
             const zoneSelect = document.getElementById('orderZone');
-            zoneSelect.innerHTML = '';
-            Object.keys(appData.zones).forEach(zId => {
-                const zone = appData.zones[zId];
-                zoneSelect.innerHTML += `<option value="${zId}">${zone.name} (عمولة التوصيل: ${zone.price} درهم)</option>`;
-            });
+            if (zoneSelect) {
+                zoneSelect.innerHTML = '';
+                const zones = Object.keys(appData.zones);
+                if (zones.length === 0) {
+                    zoneSelect.innerHTML = '<option value="">لا توجد مناطق مضافة</option>';
+                } else {
+                    zones.forEach(zId => {
+                        const zone = appData.zones[zId];
+                        zoneSelect.innerHTML += `<option value="${zId}">${zone.name} (عمولة التوصيل: ${zone.price} درهم)</option>`;
+                    });
+                }
+            }
 
             const driverSelect = document.getElementById('assignedDriver');
-            driverSelect.innerHTML = '';
             const finDriverSelect = document.getElementById('finSelectDriver');
-            finDriverSelect.innerHTML = '<option value="all">جميع العمال</option>';
             const filterDriverSelect = document.getElementById('adminFilterDriver');
-            filterDriverSelect.innerHTML = '<option value="all">جميع السائقين</option>';
 
-            Object.keys(appData.drivers).forEach(dId => {
+            if (driverSelect) driverSelect.innerHTML = '';
+            if (finDriverSelect) finDriverSelect.innerHTML = '<option value="all">جميع العمال</option>';
+            if (filterDriverSelect) filterDriverSelect.innerHTML = '<option value="all">جميع السائقين</option>';
+
+            const drivers = Object.keys(appData.drivers);
+            if (driverSelect && drivers.length === 0) {
+                driverSelect.innerHTML = '<option value="">لا توجد عمال مضافون</option>';
+            }
+
+            drivers.forEach(dId => {
                 const driver = appData.drivers[dId];
-                driverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
-                finDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
-                filterDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
+                if (driverSelect) driverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
+                if (finDriverSelect) finDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
+                if (filterDriverSelect) filterDriverSelect.innerHTML += `<option value="${dId}">${driver.name}</option>`;
             });
         }
 
@@ -944,10 +967,7 @@
         }
 
         function updateUI() {
-            if (!currentUser) {
-                toggleLoginInputs();
-                return;
-            }
+            if (!currentUser) return;
             if (currentUser.role === 'admin') {
                 populateAdminDropdowns();
                 renderAdminLists();
@@ -958,24 +978,32 @@
         }
 
         function renderAdminLists() {
-            document.getElementById('displaySelectedDateText').innerText = selectedGlobalDate;
-            const filterDriverId = document.getElementById('adminFilterDriver').value;
+            const dateText = document.getElementById('displaySelectedDateText');
+            if (dateText) dateText.innerText = selectedGlobalDate;
+            
+            const filterDriverElem = document.getElementById('adminFilterDriver');
+            const filterDriverId = filterDriverElem ? filterDriverElem.value : 'all';
 
             const driversList = document.getElementById('driversListContainer');
-            driversList.innerHTML = '';
-            Object.keys(appData.drivers).forEach(dId => {
-                const d = appData.drivers[dId];
-                driversList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${d.name} (PIN: ${d.pin})</span><button onclick="deleteDriver('${dId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div>`;
-            });
+            if (driversList) {
+                driversList.innerHTML = '';
+                Object.keys(appData.drivers).forEach(dId => {
+                    const d = appData.drivers[dId];
+                    driversList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${d.name} (PIN: ${d.pin})</span><button onclick="deleteDriver('${dId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div>`;
+                });
+            }
 
             const zonesList = document.getElementById('zonesListContainer');
-            zonesList.innerHTML = '';
-            Object.keys(appData.zones).forEach(zId => {
-                const z = appData.zones[zId];
-                zonesList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${z.name}</span><div class="flex items-center gap-3"><span class="text-teal-600 font-bold">${z.price} درهم للتوصيل</span><button onclick="deleteZone('${zId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div></div>`;
-            });
+            if (zonesList) {
+                zonesList.innerHTML = '';
+                Object.keys(appData.zones).forEach(zId => {
+                    const z = appData.zones[zId];
+                    zonesList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${z.name}</span><div class="flex items-center gap-3"><span class="text-teal-600 font-bold">${z.price} درهم للتوصيل</span><button onclick="deleteZone('${zId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div></div>`;
+                });
+            }
 
             const tbody = document.getElementById('adminOrdersTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
             let totalOrders = 0, deliveredCount = 0, totalMoneyCollected = 0;
 
@@ -1046,6 +1074,7 @@
 
         function renderReturnsArchive() {
             const tbody = document.getElementById('adminReturnsTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
             const returns = appData.returns || {};
 
@@ -1075,12 +1104,17 @@
                     </tr>
                 `;
             });
-            document.getElementById('statReturnsCount').innerText = Object.keys(returns).length;
+            const retCount = document.getElementById('statReturnsCount');
+            if (retCount) retCount.innerText = Object.keys(returns).length;
         }
 
         function renderFinancialSummary() {
-            const driverId = document.getElementById('finSelectDriver').value;
-            const periodType = document.getElementById('finPeriodType').value;
+            const driverIdElem = document.getElementById('finSelectDriver');
+            const periodTypeElem = document.getElementById('finPeriodType');
+            if (!driverIdElem || !periodTypeElem) return;
+
+            const driverId = driverIdElem.value;
+            const periodType = periodTypeElem.value;
             const singleDate = document.getElementById('finDateInput').value;
             const startDate = document.getElementById('finStartDate').value;
             const endDate = document.getElementById('finEndDate').value;
@@ -1148,8 +1182,10 @@
         }
 
         function renderDriverPanel() {
-            document.getElementById('driverDisplayDate').innerText = selectedGlobalDate;
+            const dateElem = document.getElementById('driverDisplayDate');
+            if (dateElem) dateElem.innerText = selectedGlobalDate;
             const container = document.getElementById('driverOrdersList');
+            if (!container) return;
             container.innerHTML = '';
 
             let totalDriverOrders = 0, doneCount = 0, canceledCount = 0, moneyToDeliver = 0;
@@ -1235,7 +1271,8 @@
             document.getElementById('driverStatDone').innerText = doneCount;
             document.getElementById('driverStatCanceled').innerText = canceledCount;
             document.getElementById('driverStatMoneyToDeliver').innerText = `${moneyToDeliver} درهم`;
-            document.getElementById('headerEarningsVal').innerText = `${todayEarnings} درهم`;
+            const earnVal = document.getElementById('headerEarningsVal');
+            if (earnVal) earnVal.innerText = `${todayEarnings} درهم`;
         }
 
         function openDriverEarningsModal() {
@@ -1389,7 +1426,7 @@
 
         function deleteDriver(driverId) {
             if (confirm('هل أنت متأكد من حذف حساب السائق؟')) {
-                db.ref(`drivers/${driverId}`).remove();
+                db.ref(`drivers/${driverId}` ).remove();
             }
         }
 
@@ -1407,8 +1444,6 @@
                 row.style.display = text.includes(query) ? '' : 'none';
             });
         }
-
-        toggleLoginInputs();
     </script>
 </body>
 </html>
