@@ -134,7 +134,7 @@
             </div>
         </header>
 
-        <!-- القوائم الملونة للمدير (ضمن الإطار الأسود، تحت التاريخ وزر الخروج، مرتبة للهواتف) -->
+        <!-- القوائم الملونة للمدير (ضمن الإطار الأسود، تحت التاريخ وزر الخروج) -->
         <div id="adminTopNavMenus" class="hidden bg-slate-900 border-t border-slate-800 px-4 py-2.5 flex items-center justify-center gap-2 flex-wrap shadow-inner">
             <button onclick="switchAdminTab('orders')" id="topBtnOrders" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-clipboard-list"></i> إدارة الطلبيات والمالية
@@ -188,9 +188,8 @@
                     </div>
                 </div>
 
-                <!-- إدارة الطلبيات والمتابعة المالية (مدمجة معاً) -->
+                <!-- إدارة الطلبيات والمتابعة المالية -->
                 <div id="adminOrdersTab" class="space-y-6">
-                    <!-- لوحة الملخص المالي السريع أعلى الطلبيات -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                         <div class="flex justify-between items-center flex-wrap gap-2">
                             <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2"><i class="fa-solid fa-wallet text-indigo-600"></i> تصفية الحسابات والملخص المالي للسائقين</h3>
@@ -211,7 +210,6 @@
                         </div>
                     </div>
 
-                    <!-- نموذج إضافة طلبية -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                             <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة لتاريخ اليوم المختار</h3>
@@ -261,7 +259,6 @@
                         </form>
                     </div>
 
-                    <!-- جدول الطلبيات ومتابعة الدفع المالي -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
                             <h3 class="font-bold text-lg text-slate-900">طلبيات تاريخ: <span id="displaySelectedDateText" class="text-teal-600"></span></h3>
@@ -295,7 +292,7 @@
                 <div id="adminReturnsTab" class="hidden space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-lg text-slate-900">الطلبيات الملغاة والمستبدلة المرتجعة للشركة</h3>
+                            <h3 class="font-bold text-lg text-slate-900">الطلبيات الملغاة والمستبدلة والمرتجعة للشركة</h3>
                             <p class="text-xs text-slate-500">تجميع الطلبيات لاستلامها وإعادتها لمقر الشركة</p>
                         </div>
                         <div class="overflow-x-auto border rounded-xl">
@@ -370,8 +367,8 @@
                         <p class="text-xs text-slate-500 font-semibold">الطلبيات المنجزة</p>
                         <h3 id="driverStatDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-xs text-slate-500 font-semibold">الطلبيات الملغاة</p>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:bg-rose-50/50 transition" onclick="openDriverReturnsModal()" title="اضغط لرؤية تفاصيل طلبيات يجب تسليمها للإدارة">
+                        <p class="text-xs text-slate-500 font-semibold">طلبيات يجب تسليمها للإدارة</p>
                         <h3 id="driverStatCanceled" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
@@ -389,6 +386,28 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- نافذة عرض طلبيات يجب تسليمها للإدارة للسائق -->
+    <div id="driverReturnsModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-slate-900"><i class="fa-solid fa-rotate-left text-rose-600 ml-2"></i> طلبيات يجب تسليمها للإدارة</h3>
+                <button onclick="closeDriverReturnsModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
+            </div>
+            <div class="overflow-x-auto max-h-96">
+                <table class="w-full text-right border-collapse text-sm">
+                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
+                        <tr>
+                            <th class="p-3">الزبون / الهاتف</th>
+                            <th class="p-3">العنوان والمنطقة</th>
+                            <th class="p-3">الحالة والسبب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="driverReturnsModalTableBody" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة أرباح السائق -->
@@ -444,10 +463,9 @@
                     <option value="تم التوصيل">تم التوصيل بنجاح</option>
                     <option value="مؤجلة">مؤجلة لتاريخ آخر</option>
                     <option value="الزبون لا يجيب">الزبون لا يجيب (تأجيل آلي للغد)</option>
-                    <option value="ملغاة">ملغاة</option>
-                    <option value="طلبية خاطئة">طلبية خاطئة</option>
-                    <option value="استبدال">استبدال</option>
-                    <option value="تم إرجاعها">تم إرجاعها للمرتجعات</option>
+                    <option value="ملغاة">ملغاة (تسليم للإدارة)</option>
+                    <option value="طلبية خاطئة">طلبية خاطئة (تسليم للإدارة)</option>
+                    <option value="استبدال">استبدال (تسليم للإدارة)</option>
                 </select>
             </div>
             <div id="postponeDateDiv" class="hidden">
@@ -1098,6 +1116,17 @@
             let todayEarnings = 0;
             const todayStr = getTodayString();
 
+            // فحص المرتجعات الخاصة بالسائق الحالي والتي لم يستلمها المدير بعد
+            const returns = appData.returns || {};
+            let driverReturnsCount = 0;
+            Object.keys(returns).forEach(rId => {
+                const r = returns[rId];
+                if (r.driverId === currentUser.id) {
+                    driverReturnsCount++;
+                }
+            });
+            canceledCount = driverReturnsCount;
+
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
                 if (o.driverId === currentUser.id) {
@@ -1115,11 +1144,9 @@
                             if (o.financialStatus !== 'تم الدفع' && o.paymentMethod === 'COD') {
                                 moneyToDeliver += (o.price - zone.price);
                             }
-                        } else if (o.status === 'ملغاة' || o.status === 'طلبية خاطئة' || o.status === 'استبدال' || o.status === 'تم إرجاعها') {
-                            canceledCount++;
                         }
 
-                        const isCanceled = o.status === 'ملغاة' || o.status === 'طلبية خاطئة' || o.status === 'استبدال' || o.status === 'تم إرجاعها';
+                        const isCanceled = o.status === 'ملغاة' || o.status === 'طلبية خاطئة' || o.status === 'استبدال';
                         const isPaid = o.financialStatus === 'تم الدفع';
                         
                         let cardClasses = "border rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4 ";
@@ -1178,6 +1205,45 @@
             document.getElementById('driverStatMoneyToDeliver').innerText = `${moneyToDeliver} درهم`;
             const earnVal = document.getElementById('headerEarningsVal');
             if (earnVal) earnVal.innerText = `${todayEarnings} درهم`;
+        }
+
+        function openDriverReturnsModal() {
+            if (!currentUser || currentUser.role !== 'driver') return;
+            const tbody = document.getElementById('driverReturnsModalTableBody');
+            tbody.innerHTML = '';
+            const returns = appData.returns || {};
+            let count = 0;
+
+            Object.keys(returns).forEach(rId => {
+                const r = returns[rId];
+                if (r.driverId === currentUser.id) {
+                    count++;
+                    const zone = appData.zones[r.zoneId] || { name: 'منطقة محذوفة' };
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-3">
+                                <div class="font-bold text-slate-900">${r.customerName}</div>
+                                <div class="text-xs text-slate-500">${r.phone}</div>
+                            </td>
+                            <td class="p-3 text-xs text-slate-600">${zone.name} - ${r.address}</td>
+                            <td class="p-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">${r.status}</span>
+                                <div class="text-xs text-slate-500 mt-1">${r.notes}</div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (count === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-500 text-xs">لا توجد طلبيات بحاجة للتسليم للإدارة حالياً.</td></tr>`;
+            }
+
+            document.getElementById('driverReturnsModal').classList.remove('hidden');
+        }
+
+        function closeDriverReturnsModal() {
+            document.getElementById('driverReturnsModal').classList.add('hidden');
         }
 
         function openDriverEarningsModal() {
@@ -1285,18 +1351,30 @@
                 if (note) updates.notes = order.notes + ` | تحديث: ${note}`;
             }
 
-            if (status === 'ملغاة' || status === 'طلبية خاطئة' || status === 'استبدال' || status === 'تم إرجاعها') {
-                const returnItem = {
-                    customerName: order.customerName,
-                    phone: order.phone,
-                    zoneId: order.zoneId,
-                    address: order.address,
-                    driverId: order.driverId,
-                    status: status,
-                    notes: note || order.notes,
-                    orderDate: order.orderDate
-                };
-                db.ref('returns').push().set(returnItem);
+            // فحص هل الحالة من الحالات التي يجب إرسالها للمرتجعات مباشرة (ملغاة، طلبية خاطئة، استبدال)
+            if (status === 'ملغاة' || status === 'طلبية خاطئة' || status === 'استبدال') {
+                // التأكد من عدم تكرار الإرسال لنفس الطلبية إذا تم الضغط مرتين
+                let alreadyExists = false;
+                Object.keys(appData.returns || {}).forEach(rKey => {
+                    const rObj = appData.returns[rKey];
+                    if (rObj.customerName === order.customerName && rObj.phone === order.phone && rObj.driverId === order.driverId && rObj.status === status) {
+                        alreadyExists = true;
+                    }
+                });
+
+                if (!alreadyExists) {
+                    const returnItem = {
+                        customerName: order.customerName,
+                        phone: order.phone,
+                        zoneId: order.zoneId,
+                        address: order.address,
+                        driverId: order.driverId,
+                        status: status,
+                        notes: note || order.notes,
+                        orderDate: order.orderDate
+                    };
+                    db.ref('returns').push().set(returnItem);
+                }
             }
 
             db.ref(`orders/${orderId}`).update(updates, (error) => {
@@ -1308,7 +1386,7 @@
         }
 
         function removeReturnItem(returnId) {
-            if (confirm('هل أنت متأكد من استلام هذه الطلبية وإزالتها من الأرشيف لإعادتها للشركة؟')) {
+            if (confirm('هل أنت متأكد من استلام هذه الطلبية وإزالتها من الأرشيف لإعادتها للشركة؟ (ستختفي تلقائياً من قائمة السائق أيضاً)')) {
                 db.ref(`returns/${returnId}`).remove();
             }
         }
