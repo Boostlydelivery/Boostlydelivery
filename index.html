@@ -18,7 +18,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-    <!-- شاشة تتبع الزبون العامة -->
+    <!-- شاشة تتبع الزبون العامة (تظهر مباشرة بدون الحاجة لتسجيل دخول) -->
     <div id="customerTrackingScreen" class="hidden fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center space-y-4 border-t-4 border-teal-600">
             <div class="bg-teal-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-teal-600 text-2xl font-bold shadow-inner">
@@ -26,7 +26,7 @@
             </div>
             <h2 class="text-2xl font-bold text-slate-900">تتبع حالة طلبيتك</h2>
             <div id="trackDetails" class="bg-slate-50 p-4 rounded-xl text-right space-y-2 text-sm border"></div>
-            <button onclick="window.location.href = window.location.pathname" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl transition">العودة للتطبيق</button>
+            <button onclick="window.location.href = window.location.pathname.split('?')[0]" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl transition">إغلاق التتبع</button>
         </div>
     </div>
 
@@ -134,7 +134,7 @@
             </div>
         </header>
 
-        <!-- القوائم الملونة للمدير (ضمن الإطار الأسود، تحت التاريخ وزر الخروج) -->
+        <!-- القوائم الملونة للمدير -->
         <div id="adminTopNavMenus" class="hidden bg-slate-900 border-t border-slate-800 px-4 py-2.5 flex items-center justify-center gap-2 flex-wrap shadow-inner">
             <button onclick="switchAdminTab('orders')" id="topBtnOrders" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-clipboard-list"></i> إدارة الطلبيات والمالية
@@ -273,12 +273,12 @@
                             <table class="w-full text-right border-collapse">
                                 <thead class="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
                                     <tr>
-                                        <th class="p-4">الزبون / الهاتف</th>
+                                        <th class="p-4">رقم الطلب والزبون</th>
                                         <th class="p-4">المنطقة والعنوان</th>
                                         <th class="p-4">السائق المكلف</th>
-                                        <th class="p-4">المبلغ / طريقة الدفع</th>
+                                        <th class="p-4">المبلغ / الدفع</th>
                                         <th class="p-4">الحالة</th>
-                                        <th class="p-4">حالة التحصيل المالي</th>
+                                        <th class="p-4">التحصيل المالي</th>
                                         <th class="p-4">الإجراءات</th>
                                     </tr>
                                 </thead>
@@ -299,7 +299,7 @@
                             <table class="w-full text-right border-collapse text-sm">
                                 <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
                                     <tr>
-                                        <th class="p-3">التاريخ</th>
+                                        <th class="p-3">رقم الطلب والتاريخ</th>
                                         <th class="p-3">الزبون / الهاتف</th>
                                         <th class="p-3">العنوان والمنطقة</th>
                                         <th class="p-3">السائق</th>
@@ -321,6 +321,10 @@
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">اسم عامل التوصيل</label>
                                 <input type="text" id="newDriverName" required class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">رقم هاتف السائق (واتساب)</label>
+                                <input type="text" id="newDriverPhone" required placeholder="06XXXXXXXX" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">رمز الدخول السري (PIN)</label>
@@ -399,7 +403,7 @@
                 <table class="w-full text-right border-collapse text-sm">
                     <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
                         <tr>
-                            <th class="p-3">الزبون / الهاتف</th>
+                            <th class="p-3">رقم الطلب والزبون</th>
                             <th class="p-3">العنوان والمنطقة</th>
                             <th class="p-3">الحالة والسبب</th>
                         </tr>
@@ -547,7 +551,7 @@
 
                 if (daysLeft <= 3 && daysLeft > 0) {
                     alertBanner.classList.remove('hidden');
-                    alertText.innerText = `تنبيه: سينتهي ترخيص النظام خلال ${daysLeft} أيام. يرجى التواصل لتجديد الاشتراك.`;
+                    alertText.innerText = `تنبيه: سينتهي ترخيص النظام خلال ${daysLeft} أيام. يرجى تجديد الاشتراك لتجنب توقف الخدمة.`;
                 } else if (daysLeft <= 0) {
                     alertBanner.classList.remove('hidden');
                     alertText.innerText = `عذراً، لقد انتهى ترخيص النظام. يرجى تجديد الاشتراك لاستمرار العمل.`;
@@ -604,19 +608,25 @@
             const urlParams = new URLSearchParams(window.location.search);
             const trackOrderId = urlParams.get('track');
             if (trackOrderId) {
+                // شاشة تتبع الزبون تعمل مباشرة بدون تسجيل دخول وبشكل مستقل تماماً
                 document.getElementById('customerTrackingScreen').classList.remove('hidden');
-                db.ref(`orders/${trackOrderId}`).once('value', (snapshot) => {
-                    const o = snapshot.val();
+                db.ref('orders').orderByChild('orderNumber').equalTo(trackOrderId).once('value', (snapshot) => {
                     const detailsDiv = document.getElementById('trackDetails');
-                    if (o) {
+                    let foundOrder = null;
+                    snapshot.forEach(childSnap => {
+                        foundOrder = childSnap.val();
+                    });
+
+                    if (foundOrder) {
                         detailsDiv.innerHTML = `
-                            <p><strong>اسم الزبون:</strong> ${o.customerName}</p>
-                            <p><strong>العنوان:</strong> ${o.address}</p>
-                            <p><strong>حالة الطلب:</strong> <span class="text-teal-600 font-bold">${o.status}</span></p>
-                            <p><strong>تاريخ الطلب:</strong> ${o.orderDate}</p>
+                            <p><strong>رقم الطلب:</strong> <span class="font-mono text-indigo-600 font-bold">${foundOrder.orderNumber}</span></p>
+                            <p><strong>اسم الزبون:</strong> ${foundOrder.customerName}</p>
+                            <p><strong>العنوان:</strong> ${foundOrder.address}</p>
+                            <p><strong>حالة الطلب:</strong> <span class="text-teal-600 font-bold">${foundOrder.status}</span></p>
+                            <p><strong>تاريخ الطلب:</strong> ${foundOrder.orderDate}</p>
                         `;
                     } else {
-                        detailsDiv.innerHTML = `<p class="text-rose-600 font-bold">عذراً، لم يتم العثور على تفاصيل هذه الطلبية.</p>`;
+                        detailsDiv.innerHTML = `<p class="text-rose-600 font-bold">عذراً، لم يتم العثور على تفاصيل هذه الطلبية برقم التتبع المحدد.</p>`;
                     }
                 });
                 return;
@@ -723,7 +733,7 @@
                 }
                 const driver = appData.drivers[driverId];
                 if (driver.pin === pin) {
-                    currentUser = { role: 'driver', id: driverId, name: driver.name };
+                    currentUser = { role: 'driver', id: driverId, name: driver.name, phone: driver.phone || '' };
                     if (rememberMe) localStorage.setItem('delivery_saved_session', JSON.stringify(currentUser));
                     initAppSession();
                 } else {
@@ -788,12 +798,12 @@
         }
 
         function exportDayOrdersExcel() {
-            let csvContent = "\uFEFFمعرف الطلبية,اسم الزبون,الهاتف,المنطقة,العنوان,ثمن الطلبية,طريقة الدفع,الحالة,حالة الدفع,التاريخ\n";
+            let csvContent = "\uFEFFرقم الطلب,اسم الزبون,الهاتف,المنطقة,العنوان,ثمن الطلبية,طريقة الدفع,الحالة,حالة الدفع,التاريخ\n";
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
                 if (o.orderDate !== selectedGlobalDate) return;
                 const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة' };
-                csvContent += `"${oId}","${o.customerName}","${o.phone}","${zone.name}","${o.address}","${o.price}","${o.paymentMethod}","${o.status}","${o.financialStatus}","${o.orderDate}"\n`;
+                csvContent += `"${o.orderNumber}","${o.customerName}","${o.phone}","${zone.name}","${o.address}","${o.price}","${o.paymentMethod}","${o.status}","${o.financialStatus}","${o.orderDate}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -809,10 +819,12 @@
         function addDriver(e) {
             e.preventDefault();
             const name = document.getElementById('newDriverName').value;
+            const phone = document.getElementById('newDriverPhone').value;
             const pin = document.getElementById('newDriverPin').value;
-            db.ref('drivers').push().set({ name, pin }, (error) => {
+            db.ref('drivers').push().set({ name, phone, pin }, (error) => {
                 if (!error) {
                     document.getElementById('newDriverName').value = '';
+                    document.getElementById('newDriverPhone').value = '';
                     document.getElementById('newDriverPin').value = '';
                     alert('تمت إضافة عامل التوصيل سحابياً بنجاح');
                 }
@@ -884,7 +896,11 @@
                 return;
             }
 
+            // توليد رقم عشوائي فريد مكون من 8 أرقام للطلبية
+            const orderNumber = Math.floor(10000000 + Math.random() * 90000000).toString();
+
             const newOrder = {
+                orderNumber,
                 customerName,
                 phone,
                 zoneId,
@@ -904,7 +920,7 @@
                 if (!error) {
                     document.getElementById('orderForm').reset();
                     togglePriceField();
-                    alert('تم إرسال الطلبية سحابياً بنجاح إلى السائق');
+                    alert('تم إرسال الطلبية سحابياً بنجاح برقم التتبع: ' + orderNumber);
                 }
             });
         }
@@ -955,7 +971,7 @@
                 driversList.innerHTML = '';
                 Object.keys(appData.drivers).forEach(dId => {
                     const d = appData.drivers[dId];
-                    driversList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${d.name} (PIN: ${d.pin})</span><button onclick="deleteDriver('${dId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div>`;
+                    driversList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><span class="font-semibold">${d.name} (${d.phone || 'بدون هاتف'} - PIN: ${d.pin})</span><button onclick="deleteDriver('${dId}')" class="text-rose-600 hover:text-rose-800 text-sm"><i class="fa-solid fa-trash"></i></button></div>`;
                 });
             }
 
@@ -994,11 +1010,12 @@
                 const rowBgColor = isPaid ? 'bg-emerald-50/50' : 'bg-white';
                 const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
                 const waPhone = formatWhatsAppNumber(o.phone);
-                const trackLink = `${currentUrlBase}?track=${oId}`;
+                const trackLink = `${currentUrlBase}?track=${o.orderNumber}`;
 
                 tbody.innerHTML += `
                     <tr class="${rowBgColor} border-b hover:bg-slate-50/80 transition">
                         <td class="p-4">
+                            <div class="font-mono text-xs text-indigo-600 font-bold">#${o.orderNumber || '---'}</div>
                             <div class="font-bold text-slate-900">${o.customerName}</div>
                             <div class="text-xs text-slate-500 flex gap-2 mt-1 flex-wrap">
                                 <a href="tel:${o.phone}" class="text-teal-600 hover:underline"><i class="fa-solid fa-phone"></i> ${o.phone}</a>
@@ -1082,7 +1099,10 @@
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="p-3 text-xs text-slate-500">${r.orderDate}</td>
+                        <td class="p-3">
+                            <div class="font-mono text-xs text-indigo-600 font-bold">#${r.orderNumber || '---'}</div>
+                            <div class="text-xs text-slate-500">${r.orderDate}</div>
+                        </td>
                         <td class="p-3">
                             <div class="font-bold text-slate-900">${r.customerName}</div>
                             <div class="text-xs text-slate-500">${r.phone}</div>
@@ -1116,7 +1136,6 @@
             let todayEarnings = 0;
             const todayStr = getTodayString();
 
-            // فحص المرتجعات الخاصة بالسائق الحالي والتي لم يستلمها المدير بعد
             const returns = appData.returns || {};
             let driverReturnsCount = 0;
             Object.keys(returns).forEach(rId => {
@@ -1126,6 +1145,8 @@
                 }
             });
             canceledCount = driverReturnsCount;
+
+            const currentUrlBase = window.location.href.split('?')[0];
 
             Object.keys(appData.orders).forEach(oId => {
                 const o = appData.orders[oId];
@@ -1159,15 +1180,24 @@
                         }
 
                         const waPhone = formatWhatsAppNumber(o.phone);
+                        const trackLink = `${currentUrlBase}?track=${o.orderNumber}`;
+                        
+                        // رسالة واتساب للزبون تتضمن رابط التتبع، اسم السائق ورقم هاتفه
+                        const driverName = currentUser.name;
+                        const driverPhone = currentUser.phone || 'غير مسجل';
+                        const customerMsg = encodeURIComponent(`مرحباً ${o.customerName}، لديك طلبية برقم #${o.orderNumber} مع عامل التوصيل ${driverName} (الهاتف: ${driverPhone}). يمكنك تتبع طلبيتك مباشرة عبر الرابط التالي:\n${trackLink}`);
 
                         container.innerHTML += `
                             <div class="${cardClasses}">
                                 <div>
                                     <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2">
-                                            ${o.customerName}
-                                            ${isPaid ? '<span class="text-blue-600 text-sm" title="تم دفع وتحصيل حسابها من الإدارة"><i class="fa-solid fa-circle-check"></i> <i class="fa-solid fa-wallet"></i></span>' : ''}
-                                        </h4>
+                                        <div>
+                                            <span class="font-mono text-xs text-indigo-600 font-bold">#${o.orderNumber || '---'}</span>
+                                            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mt-0.5">
+                                                ${o.customerName}
+                                                ${isPaid ? '<span class="text-blue-600 text-sm" title="تم دفع وتحصيل حسابها من الإدارة"><i class="fa-solid fa-circle-check"></i> <i class="fa-solid fa-wallet"></i></span>' : ''}
+                                            </h4>
+                                        </div>
                                         <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isCanceled ? 'bg-rose-100 text-rose-800' : 'bg-teal-50 text-teal-700'}">${o.status}</span>
                                     </div>
                                     <div class="space-y-1 text-sm text-slate-600">
@@ -1185,6 +1215,9 @@
                                     </a>
                                     <a href="https://wa.me/${waPhone}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
                                         <i class="fa-brands fa-whatsapp"></i> واتساب
+                                    </a>
+                                    <a href="https://wa.me/${waPhone}?text=${customerMsg}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition" title="إرسال رابط التتبع مع تفاصيل السائق عبر الواتساب">
+                                        <i class="fa-solid fa-share-nodes"></i> إرسال رابط التتبع
                                     </a>
                                     <a href="https://maps.google.com/?q=${encodeURIComponent(zone.name + ' ' + o.address)}" target="_blank" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
                                         <i class="fa-solid fa-map"></i> الخريطة
@@ -1222,6 +1255,7 @@
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50 transition">
                             <td class="p-3">
+                                <div class="font-mono text-xs text-indigo-600 font-bold">#${r.orderNumber || '---'}</div>
                                 <div class="font-bold text-slate-900">${r.customerName}</div>
                                 <div class="text-xs text-slate-500">${r.phone}</div>
                             </td>
@@ -1351,30 +1385,43 @@
                 if (note) updates.notes = order.notes + ` | تحديث: ${note}`;
             }
 
-            // فحص هل الحالة من الحالات التي يجب إرسالها للمرتجعات مباشرة (ملغاة، طلبية خاطئة، استبدال)
+            // فحص ومعالجة المرتجعات دون تكرار (تحديث الحالة إذا كانت موجودة مسبقاً أو إضافتها بربط مع الـ Order ID)
             if (status === 'ملغاة' || status === 'طلبية خاطئة' || status === 'استبدال') {
-                // التأكد من عدم تكرار الإرسال لنفس الطلبية إذا تم الضغط مرتين
-                let alreadyExists = false;
+                let existingReturnKey = null;
                 Object.keys(appData.returns || {}).forEach(rKey => {
                     const rObj = appData.returns[rKey];
-                    if (rObj.customerName === order.customerName && rObj.phone === order.phone && rObj.driverId === order.driverId && rObj.status === status) {
-                        alreadyExists = true;
+                    if (rObj.orderNumber === order.orderNumber) {
+                        existingReturnKey = rKey;
                     }
                 });
 
-                if (!alreadyExists) {
-                    const returnItem = {
-                        customerName: order.customerName,
-                        phone: order.phone,
-                        zoneId: order.zoneId,
-                        address: order.address,
-                        driverId: order.driverId,
-                        status: status,
-                        notes: note || order.notes,
-                        orderDate: order.orderDate
-                    };
+                const returnItem = {
+                    orderNumber: order.orderNumber,
+                    customerName: order.customerName,
+                    phone: order.phone,
+                    zoneId: order.zoneId,
+                    address: order.address,
+                    driverId: order.driverId,
+                    status: status,
+                    notes: note || order.notes,
+                    orderDate: order.orderDate
+                };
+
+                if (existingReturnKey) {
+                    // تحديث حالة المرتجع الحالي بدلاً من تكراره
+                    db.ref(`returns/${existingReturnKey}`).set(returnItem);
+                } else {
+                    // إنشاء مرتجع جديد لأول مرة
                     db.ref('returns').push().set(returnItem);
                 }
+            } else {
+                // إذا تم تحويل الطلبية لحالة أخرى غير المرتجعات، نحذفها من أرشيف المرتجعات إن كانت موجودة به مسبقاً
+                Object.keys(appData.returns || {}).forEach(rKey => {
+                    const rObj = appData.returns[rKey];
+                    if (rObj.orderNumber === order.orderNumber) {
+                        db.ref(`returns/${rKey}`).remove();
+                    }
+                });
             }
 
             db.ref(`orders/${orderId}`).update(updates, (error) => {
