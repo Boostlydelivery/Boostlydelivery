@@ -104,7 +104,7 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="appContainer" class="hidden flex flex-col min-h-screen">
-        <!-- الشريط العلوي مع القوائم الملونة -->
+        <!-- الشريط العلوي -->
         <header class="bg-slate-900 text-white shadow-md px-4 py-3 flex justify-between items-center flex-wrap gap-3">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="bg-teal-600 p-2 rounded-lg text-white">
@@ -113,22 +113,6 @@
                 <div>
                     <h2 id="headerTitle" class="font-bold text-base">لوحة التحكم</h2>
                 </div>
-            </div>
-
-            <!-- القوائم الملونة للمدير -->
-            <div id="adminTopNavMenus" class="hidden items-center gap-2 flex-wrap">
-                <button onclick="switchAdminTab('orders')" id="topBtnOrders" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-clipboard-list"></i> إدارة الطلبيات
-                </button>
-                <button onclick="switchAdminTab('returns')" id="topBtnReturns" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-rotate-left"></i> المرتجعات للشركة
-                </button>
-                <button onclick="switchAdminTab('drivers')" id="topBtnDrivers" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-users-gear"></i> إدارة السائقين
-                </button>
-                <button onclick="switchAdminTab('financials')" id="topBtnFinancials" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-wallet"></i> المتابعة المالية
-                </button>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
@@ -149,6 +133,25 @@
                 </button>
             </div>
         </header>
+
+        <!-- القوائم الملونة للمدير (ضمن الإطار الأسود، تحت التاريخ وزر الخروج، مرتبة للهواتف) -->
+        <div id="adminTopNavMenus" class="hidden bg-slate-900 border-t border-slate-800 px-4 py-2.5 flex items-center justify-center gap-2 flex-wrap shadow-inner">
+            <button onclick="switchAdminTab('orders')" id="topBtnOrders" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-clipboard-list"></i> إدارة الطلبيات والمالية
+            </button>
+            <button onclick="switchAdminTab('returns')" id="topBtnReturns" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i> المرتجعات للشركة
+            </button>
+            <button onclick="switchAdminTab('drivers')" id="topBtnDrivers" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-users-gear"></i> إدارة السائقين
+            </button>
+        </div>
+
+        <!-- تنبيه قرب انتهاء الاشتراك للمدير -->
+        <div id="subscriptionAlertBanner" class="hidden bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold flex items-center justify-center gap-2 shadow">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="subAlertText">تنبيه: سينتهي ترخيص النظام قريباً. يرجى تجديد الاشتراك لتجنب توقف الخدمة.</span>
+        </div>
 
         <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
             
@@ -185,8 +188,30 @@
                     </div>
                 </div>
 
-                <!-- إدارة الطلبيات -->
+                <!-- إدارة الطلبيات والمتابعة المالية (مدمجة معاً) -->
                 <div id="adminOrdersTab" class="space-y-6">
+                    <!-- لوحة الملخص المالي السريع أعلى الطلبيات -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                        <div class="flex justify-between items-center flex-wrap gap-2">
+                            <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2"><i class="fa-solid fa-wallet text-indigo-600"></i> تصفية الحسابات والملخص المالي للسائقين</h3>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">اختر عامل التوصيل للتصفية</label>
+                                <select id="finSelectDriver" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white font-semibold"></select>
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-center">
+                                <p class="text-xs text-indigo-600 font-bold">أرباح السائق (رسوم التوصيل)</p>
+                                <h4 id="finDriverEarnings" class="text-xl font-black text-indigo-900 mt-1">0 درهم</h4>
+                            </div>
+                            <div class="bg-teal-50 border border-teal-100 p-3 rounded-xl text-center">
+                                <p class="text-xs text-teal-600 font-bold">صافي المطلوب تسليمه للإدارة</p>
+                                <h4 id="finDriverNetToAdmin" class="text-xl font-black text-teal-900 mt-1">0 درهم</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نموذج إضافة طلبية -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                             <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-teal-600"></i> إضافة طلبية جديدة لتاريخ اليوم المختار</h3>
@@ -236,7 +261,7 @@
                         </form>
                     </div>
 
-                    <!-- جدول الطلبيات -->
+                    <!-- جدول الطلبيات ومتابعة الدفع المالي -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
                             <h3 class="font-bold text-lg text-slate-900">طلبيات تاريخ: <span id="displaySelectedDateText" class="text-teal-600"></span></h3>
@@ -332,75 +357,6 @@
                     </div>
                 </div>
 
-                <!-- المتابعة المالية -->
-                <div id="adminFinancialsTab" class="hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-                        <h3 class="font-bold text-lg text-slate-900">المتابعة المالية المتقدمة وتصفية الحسابات</h3>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">اختر عامل التوصيل</label>
-                                <select id="finSelectDriver" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">فترة التقرير</label>
-                                <select id="finPeriodType" onchange="togglePeriodInputs()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
-                                    <option value="day">يوم محدد</option>
-                                    <option value="range">فترة (من تاريخ إلى تاريخ)</option>
-                                    <option value="all">كل الطلبيات غير المسددة</option>
-                                </select>
-                            </div>
-                            <div id="finSingleDateDiv">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
-                                <input type="date" id="finDateInput" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
-                            </div>
-                            <div id="finRangeDiv" class="hidden sm:col-span-3 grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">من تاريخ</label>
-                                    <input type="date" id="finStartDate" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">إلى تاريخ</label>
-                                    <input type="date" id="finEndDate" onchange="renderFinancialSummary()" class="w-full px-3 py-2 border rounded-xl outline-none text-sm bg-white">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
-                                <p class="text-xs text-indigo-600 font-bold">أرباح السائق (رسوم التوصيل)</p>
-                                <h4 id="finDriverEarnings" class="text-2xl font-black text-indigo-900 mt-1">0 درهم</h4>
-                            </div>
-                            <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
-                                <p class="text-xs text-emerald-600 font-bold">المبالغ النقدية المحصلة (COD)</p>
-                                <h4 id="finDriverCollectedCash" class="text-2xl font-black text-emerald-900 mt-1">0 درهم</h4>
-                            </div>
-                            <div class="bg-teal-50 border border-teal-100 p-4 rounded-xl">
-                                <p class="text-xs text-teal-600 font-bold">صافي المطلوب تسليمه للإدارة</p>
-                                <h4 id="finDriverNetToAdmin" class="text-2xl font-black text-teal-900 mt-1">0 درهم</h4>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h4 class="font-bold text-md text-slate-800 mb-3">الطلبيات المنجزة (تتطلب تسليم الأموال وتحديث حالة الدفع):</h4>
-                            <div class="overflow-x-auto border rounded-xl">
-                                <table class="w-full text-right border-collapse text-sm">
-                                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase">
-                                        <tr>
-                                            <th class="p-3">التاريخ</th>
-                                            <th class="p-3">الزبون والمنطقة</th>
-                                            <th class="p-3">نوع الدفع والثمن</th>
-                                            <th class="p-3">ربح السائق (التوصيل)</th>
-                                            <th class="p-3">حالة الدفع للإدارة</th>
-                                            <th class="p-3">الإجراء</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="driverFinancialOrdersTable" class="divide-y divide-slate-200"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- لوحة عامل التوصيل -->
@@ -509,7 +465,7 @@
         </div>
     </div>
 
-    <!-- JavaScript البرمجي المتصل بـ Firebase والمزامنة -->
+    <!-- JavaScript المحدث والمتصل بـ Firebase -->
     <script>
         const firebaseConfig = {
             databaseURL: "https://boostlydelivery-6174f-default-rtdb.firebaseio.com/"
@@ -563,6 +519,24 @@
             alert('مفتاح التفعيل غير صحيح أو غير متوافق مع هذا الجهاز!');
         }
 
+        function checkSubscriptionExpiryNotice() {
+            const expiry = localStorage.getItem('admin_expiry_time');
+            if (expiry) {
+                const timeLeft = parseInt(expiry) - Date.now();
+                const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+                const alertBanner = document.getElementById('subscriptionAlertBanner');
+                const alertText = document.getElementById('subAlertText');
+
+                if (daysLeft <= 3 && daysLeft > 0) {
+                    alertBanner.classList.remove('hidden');
+                    alertText.innerText = `تنبيه: سينتهي ترخيص النظام خلال ${daysLeft} أيام. يرجى التواصل لتجديد الاشتراك.`;
+                } else if (daysLeft <= 0) {
+                    alertBanner.classList.remove('hidden');
+                    alertText.innerText = `عذراً، لقد انتهى ترخيص النظام. يرجى تجديد الاشتراك لاستمرار العمل.`;
+                }
+            }
+        }
+
         const connRef = db.ref('.info/connected');
         connRef.on('value', (snap) => {
             const statusDiv = document.getElementById('connectionStatus');
@@ -596,9 +570,6 @@
 
         let selectedGlobalDate = getTodayString();
         document.getElementById('globalDateFilter').value = selectedGlobalDate;
-        document.getElementById('finDateInput').value = selectedGlobalDate;
-        document.getElementById('finStartDate').value = selectedGlobalDate;
-        document.getElementById('finEndDate').value = selectedGlobalDate;
         document.getElementById('modalEarnStart').value = selectedGlobalDate;
         document.getElementById('modalEarnEnd').value = selectedGlobalDate;
 
@@ -633,7 +604,6 @@
                 return;
             }
 
-            // الاستماع الدائم للبيانات من Firebase
             db.ref('/').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -645,7 +615,6 @@
                     appData = { drivers: {}, zones: {}, orders: {}, returns: {} };
                 }
                 
-                // تحديث القوائم المدخلة حالاً فور جلبها من السحابة
                 toggleLoginInputs();
                 updateUI();
             });
@@ -670,6 +639,7 @@
         function checkAdminActivationOnLoad() {
             const expiry = localStorage.getItem('admin_expiry_time');
             if (expiry && Date.now() <= parseInt(expiry)) {
+                checkSubscriptionExpiryNotice();
                 initAppSession();
             } else {
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -717,6 +687,7 @@
                     
                     const expiry = localStorage.getItem('admin_expiry_time');
                     if (expiry && Date.now() <= parseInt(expiry)) {
+                        checkSubscriptionExpiryNotice();
                         initAppSession();
                     } else {
                         document.getElementById('loginScreen').classList.add('hidden');
@@ -863,7 +834,7 @@
             const filterDriverSelect = document.getElementById('adminFilterDriver');
 
             if (driverSelect) driverSelect.innerHTML = '';
-            if (finDriverSelect) finDriverSelect.innerHTML = '<option value="all">جميع العمال</option>';
+            if (finDriverSelect) finDriverSelect.innerHTML = '<option value="all">جميع العمال (الملخص العام)</option>';
             if (filterDriverSelect) filterDriverSelect.innerHTML = '<option value="all">جميع السائقين</option>';
 
             const drivers = Object.keys(appData.drivers);
@@ -924,46 +895,22 @@
             document.getElementById('adminOrdersTab').classList.add('hidden');
             document.getElementById('adminReturnsTab').classList.add('hidden');
             document.getElementById('adminDriversTab').classList.add('hidden');
-            document.getElementById('adminFinancialsTab').classList.add('hidden');
             
-            document.getElementById('topBtnOrders').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
-            document.getElementById('topBtnReturns').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
-            document.getElementById('topBtnDrivers').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
-            document.getElementById('topBtnFinancials').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
+            document.getElementById('topBtnOrders').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
+            document.getElementById('topBtnReturns').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
+            document.getElementById('topBtnDrivers').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow transition flex items-center gap-1.5';
 
             if (tab === 'orders') {
                 document.getElementById('adminOrdersTab').classList.remove('hidden');
-                document.getElementById('topBtnOrders').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5';
+                document.getElementById('topBtnOrders').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white shadow transition flex items-center gap-1.5';
             } else if (tab === 'returns') {
                 document.getElementById('adminReturnsTab').classList.remove('hidden');
-                document.getElementById('topBtnReturns').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 text-white shadow transition flex items-center gap-1.5';
+                document.getElementById('topBtnReturns').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow transition flex items-center gap-1.5';
                 renderReturnsArchive();
             } else if (tab === 'drivers') {
                 document.getElementById('adminDriversTab').classList.remove('hidden');
-                document.getElementById('topBtnDrivers').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white shadow transition flex items-center gap-1.5';
-            } else if (tab === 'financials') {
-                document.getElementById('adminFinancialsTab').classList.remove('hidden');
-                document.getElementById('topBtnFinancials').className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow transition flex items-center gap-1.5';
-                renderFinancialSummary();
+                document.getElementById('topBtnDrivers').className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-600 text-white shadow transition flex items-center gap-1.5';
             }
-        }
-
-        function togglePeriodInputs() {
-            const period = document.getElementById('finPeriodType').value;
-            const singleDiv = document.getElementById('finSingleDateDiv');
-            const rangeDiv = document.getElementById('finRangeDiv');
-
-            if (period === 'day') {
-                singleDiv.classList.remove('hidden');
-                rangeDiv.classList.add('hidden');
-            } else if (period === 'range') {
-                singleDiv.classList.add('hidden');
-                rangeDiv.classList.remove('hidden');
-            } else {
-                singleDiv.classList.add('hidden');
-                rangeDiv.classList.add('hidden');
-            }
-            renderFinancialSummary();
         }
 
         function updateUI() {
@@ -971,6 +918,7 @@
             if (currentUser.role === 'admin') {
                 populateAdminDropdowns();
                 renderAdminLists();
+                renderFinancialSummary();
                 renderReturnsArchive();
             } else {
                 renderDriverPanel();
@@ -1055,11 +1003,11 @@
                         </td>
                         <td class="p-4">
                             <span class="px-3 py-1 rounded-full text-xs font-bold ${badgeColor}">${o.financialStatus}</span>
+                            <div class="mt-1">
+                                <button onclick="toggleFinancialStatus('${oId}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded font-bold">تبديل</button>
+                            </div>
                         </td>
                         <td class="p-4 flex items-center gap-2">
-                            <button onclick="toggleFinancialStatus('${oId}')" title="تغيير حالة الدفع للمدير" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold transition">
-                                <i class="fa-solid fa-wallet"></i> تبديل الدفع
-                            </button>
                             <button onclick="deleteOrder('${oId}')" class="text-rose-600 hover:text-rose-800 p-1.5"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
@@ -1070,6 +1018,37 @@
             document.getElementById('statDeliveredOrders').innerText = deliveredCount;
             document.getElementById('statTotalMoney').innerText = `${totalMoneyCollected} درهم`;
             document.getElementById('statReturnsCount').innerText = Object.keys(appData.returns).length;
+        }
+
+        function renderFinancialSummary() {
+            const driverIdElem = document.getElementById('finSelectDriver');
+            if (!driverIdElem) return;
+            const driverId = driverIdElem.value;
+
+            let totalEarnings = 0;
+            let netToAdmin = 0;
+
+            Object.keys(appData.orders).forEach(oId => {
+                const o = appData.orders[oId];
+                if (o.orderDate !== selectedGlobalDate) return;
+                if (o.status !== 'تم التوصيل') return;
+                if (driverId !== 'all' && o.driverId !== driverId) return;
+
+                const zone = appData.zones[o.zoneId] || { price: 0 };
+                const deliveryFee = zone.price;
+
+                totalEarnings += deliveryFee;
+                if (o.financialStatus !== 'تم الدفع') {
+                    if (o.paymentMethod === 'COD') {
+                        netToAdmin += (o.price - deliveryFee);
+                    } else {
+                        netToAdmin -= deliveryFee;
+                    }
+                }
+            });
+
+            document.getElementById('finDriverEarnings').innerText = `${totalEarnings} درهم`;
+            document.getElementById('finDriverNetToAdmin').innerText = `${netToAdmin} درهم`;
         }
 
         function renderReturnsArchive() {
@@ -1108,79 +1087,6 @@
             if (retCount) retCount.innerText = Object.keys(returns).length;
         }
 
-        function renderFinancialSummary() {
-            const driverIdElem = document.getElementById('finSelectDriver');
-            const periodTypeElem = document.getElementById('finPeriodType');
-            if (!driverIdElem || !periodTypeElem) return;
-
-            const driverId = driverIdElem.value;
-            const periodType = periodTypeElem.value;
-            const singleDate = document.getElementById('finDateInput').value;
-            const startDate = document.getElementById('finStartDate').value;
-            const endDate = document.getElementById('finEndDate').value;
-
-            let totalEarnings = 0;
-            let totalCollectedCash = 0;
-            let netToAdmin = 0;
-
-            const tableBody = document.getElementById('driverFinancialOrdersTable');
-            tableBody.innerHTML = '';
-
-            Object.keys(appData.orders).forEach(oId => {
-                const o = appData.orders[oId];
-                if (o.status !== 'تم التوصيل') return;
-                if (driverId !== 'all' && o.driverId !== driverId) return;
-
-                if (periodType === 'day' && o.orderDate !== singleDate) return;
-                if (periodType === 'range') {
-                    if (o.orderDate < startDate || o.orderDate > endDate) return;
-                }
-
-                const zone = appData.zones[o.zoneId] || { price: 0, name: 'منطقة محذوفة' };
-                const driver = appData.drivers[o.driverId] || { name: 'غير معروف' };
-                const deliveryFee = zone.price;
-
-                totalEarnings += deliveryFee;
-
-                if (o.financialStatus !== 'تم الدفع') {
-                    if (o.paymentMethod === 'COD') {
-                        totalCollectedCash += o.price;
-                        netToAdmin += (o.price - deliveryFee);
-                    } else {
-                        netToAdmin -= deliveryFee;
-                    }
-                }
-
-                const isPaid = o.financialStatus === 'تم الدفع';
-                const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
-
-                tableBody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-3 text-xs text-slate-500">${o.orderDate}</td>
-                        <td class="p-3">
-                            <div class="font-bold text-slate-900">${o.customerName}</div>
-                            <div class="text-xs text-slate-500">${zone.name} - السائق: ${driver.name}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="font-bold">${o.price} درهم</span>
-                            <div class="text-xs text-slate-500">${o.paymentMethod === 'Online' ? 'أونلاين' : 'عند الاستلام'}</div>
-                        </td>
-                        <td class="p-3 font-bold text-indigo-600">${deliveryFee} درهم</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-bold ${badgeColor}">${o.financialStatus}</span></td>
-                        <td class="p-3">
-                            <button onclick="toggleFinancialStatus('${oId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition">
-                                تبديل حالة الدفع
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('finDriverEarnings').innerText = `${totalEarnings} درهم`;
-            document.getElementById('finDriverCollectedCash').innerText = `${totalCollectedCash} درهم`;
-            document.getElementById('finDriverNetToAdmin').innerText = `${netToAdmin} درهم`;
-        }
-
         function renderDriverPanel() {
             const dateElem = document.getElementById('driverDisplayDate');
             if (dateElem) dateElem.innerText = selectedGlobalDate;
@@ -1190,7 +1096,6 @@
 
             let totalDriverOrders = 0, doneCount = 0, canceledCount = 0, moneyToDeliver = 0;
             let todayEarnings = 0;
-
             const todayStr = getTodayString();
 
             Object.keys(appData.orders).forEach(oId => {
@@ -1426,7 +1331,7 @@
 
         function deleteDriver(driverId) {
             if (confirm('هل أنت متأكد من حذف حساب السائق؟')) {
-                db.ref(`drivers/${driverId}` ).remove();
+                db.ref(`drivers/${driverId}`).remove();
             }
         }
 
