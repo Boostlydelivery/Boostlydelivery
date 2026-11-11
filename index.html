@@ -18,14 +18,16 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-    <!-- شاشة تتبع الزبون العامة (تظهر مباشرة بدون الحاجة لتسجيل دخول) -->
+    <!-- شاشة تتبع الزبون العامة (تفتح مباشرة وبشكل مستقل تماماً ودون طلب تسجيل دخول) -->
     <div id="customerTrackingScreen" class="hidden fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center space-y-4 border-t-4 border-teal-600">
             <div class="bg-teal-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-teal-600 text-2xl font-bold shadow-inner">
                 <i class="fa-solid fa-box-open"></i>
             </div>
             <h2 class="text-2xl font-bold text-slate-900">تتبع حالة طلبيتك</h2>
-            <div id="trackDetails" class="bg-slate-50 p-4 rounded-xl text-right space-y-2 text-sm border"></div>
+            <div id="trackDetails" class="bg-slate-50 p-4 rounded-xl text-right space-y-2 text-sm border">
+                <p class="text-slate-500 text-center">جاري تحميل بيانات الطلبية...</p>
+            </div>
             <button onclick="window.location.href = window.location.pathname.split('?')[0]" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl transition">إغلاق التتبع</button>
         </div>
     </div>
@@ -174,7 +176,7 @@
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-semibold">إجمالي الأموال المحصلة اليوم</p>
+                            <p class="text-xs text-slate-500 font-semibold">صافي تحصيل الشركة اليوم (بدون العمولة)</p>
                             <h3 id="statTotalMoney" class="text-2xl font-bold text-indigo-600 mt-1">0 درهم</h3>
                         </div>
                         <div class="bg-indigo-50 text-indigo-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-xl"></i></div>
@@ -495,6 +497,39 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // حل جذري: التحقق الفوري من رابط التتبع قبل أي شاشة تسجيل دخول أو تفعيل
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const trackOrderId = urlParams.get('track');
+            if (trackOrderId) {
+                window.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('activationScreen').classList.add('hidden');
+                    document.getElementById('customerTrackingScreen').classList.remove('hidden');
+                    
+                    db.ref('orders').orderByChild('orderNumber').equalTo(trackOrderId).once('value', (snapshot) => {
+                        const detailsDiv = document.getElementById('trackDetails');
+                        let foundOrder = null;
+                        snapshot.forEach(childSnap => {
+                            foundOrder = childSnap.val();
+                        });
+
+                        if (foundOrder) {
+                            detailsDiv.innerHTML = `
+                                <p><strong>رقم الطلب:</strong> <span class="font-mono text-indigo-600 font-bold">#${foundOrder.orderNumber}</span></p>
+                                <p><strong>اسم الزبون:</strong> ${foundOrder.customerName}</p>
+                                <p><strong>العنوان:</strong> ${foundOrder.address}</p>
+                                <p><strong>حالة الطلب:</strong> <span class="text-teal-600 font-bold">${foundOrder.status}</span></p>
+                                <p><strong>تاريخ الطلب:</strong> ${foundOrder.orderDate}</p>
+                            `;
+                        } else {
+                            detailsDiv.innerHTML = `<p class="text-rose-600 font-bold">عذراً، لم يتم العثور على تفاصيل هذه الطلبية برقم التتبع المحدد.</p>`;
+                        }
+                    });
+                });
+            }
+        })();
+
         function getDeviceId() {
             let dId = localStorage.getItem('device_unique_id');
             if (!dId) {
@@ -606,31 +641,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const trackOrderId = urlParams.get('track');
-            if (trackOrderId) {
-                // شاشة تتبع الزبون تعمل مباشرة بدون تسجيل دخول وبشكل مستقل تماماً
-                document.getElementById('customerTrackingScreen').classList.remove('hidden');
-                db.ref('orders').orderByChild('orderNumber').equalTo(trackOrderId).once('value', (snapshot) => {
-                    const detailsDiv = document.getElementById('trackDetails');
-                    let foundOrder = null;
-                    snapshot.forEach(childSnap => {
-                        foundOrder = childSnap.val();
-                    });
-
-                    if (foundOrder) {
-                        detailsDiv.innerHTML = `
-                            <p><strong>رقم الطلب:</strong> <span class="font-mono text-indigo-600 font-bold">${foundOrder.orderNumber}</span></p>
-                            <p><strong>اسم الزبون:</strong> ${foundOrder.customerName}</p>
-                            <p><strong>العنوان:</strong> ${foundOrder.address}</p>
-                            <p><strong>حالة الطلب:</strong> <span class="text-teal-600 font-bold">${foundOrder.status}</span></p>
-                            <p><strong>تاريخ الطلب:</strong> ${foundOrder.orderDate}</p>
-                        `;
-                    } else {
-                        detailsDiv.innerHTML = `<p class="text-rose-600 font-bold">عذراً، لم يتم العثور على تفاصيل هذه الطلبية برقم التتبع المحدد.</p>`;
-                    }
-                });
-                return;
-            }
+            if (urlParams.get('track')) return; // تم التعامل مع التتبع في الأعلى
 
             db.ref('/').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -896,7 +907,6 @@
                 return;
             }
 
-            // توليد رقم عشوائي فريد مكون من 8 أرقام للطلبية
             const orderNumber = Math.floor(10000000 + Math.random() * 90000000).toString();
 
             const newOrder = {
@@ -987,7 +997,7 @@
             const tbody = document.getElementById('adminOrdersTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
-            let totalOrders = 0, deliveredCount = 0, totalMoneyCollected = 0;
+            let totalOrders = 0, deliveredCount = 0, totalNetCompanyMoney = 0;
 
             const currentUrlBase = window.location.href.split('?')[0];
 
@@ -1002,8 +1012,9 @@
                 const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
                 const driver = appData.drivers[o.driverId] || { name: 'غير مسند' };
 
+                // حساب صافي الأموال المحصلة للشركة (ثمن الطلبية مطروحاً منه عمولة التوصيل للسائق للدفع عند الاستلام)
                 if (o.status === 'تم التوصيل' && o.paymentMethod === 'COD') {
-                    totalMoneyCollected += o.price;
+                    totalNetCompanyMoney += (o.price - zone.price);
                 }
 
                 const isPaid = o.financialStatus === 'تم الدفع';
@@ -1051,7 +1062,7 @@
 
             document.getElementById('statTotalOrders').innerText = totalOrders;
             document.getElementById('statDeliveredOrders').innerText = deliveredCount;
-            document.getElementById('statTotalMoney').innerText = `${totalMoneyCollected} درهم`;
+            document.getElementById('statTotalMoney').innerText = `${totalNetCompanyMoney} درهم`;
             document.getElementById('statReturnsCount').innerText = Object.keys(appData.returns).length;
         }
 
@@ -1182,7 +1193,7 @@
                         const waPhone = formatWhatsAppNumber(o.phone);
                         const trackLink = `${currentUrlBase}?track=${o.orderNumber}`;
                         
-                        // رسالة واتساب للزبون تتضمن رابط التتبع، اسم السائق ورقم هاتفه
+                        // استخدام بيانات السائق الصحيحة والمحفوظة في الجلسة
                         const driverName = currentUser.name;
                         const driverPhone = currentUser.phone || 'غير مسجل';
                         const customerMsg = encodeURIComponent(`مرحباً ${o.customerName}، لديك طلبية برقم #${o.orderNumber} مع عامل التوصيل ${driverName} (الهاتف: ${driverPhone}). يمكنك تتبع طلبيتك مباشرة عبر الرابط التالي:\n${trackLink}`);
@@ -1385,7 +1396,6 @@
                 if (note) updates.notes = order.notes + ` | تحديث: ${note}`;
             }
 
-            // فحص ومعالجة المرتجعات دون تكرار (تحديث الحالة إذا كانت موجودة مسبقاً أو إضافتها بربط مع الـ Order ID)
             if (status === 'ملغاة' || status === 'طلبية خاطئة' || status === 'استبدال') {
                 let existingReturnKey = null;
                 Object.keys(appData.returns || {}).forEach(rKey => {
@@ -1408,14 +1418,11 @@
                 };
 
                 if (existingReturnKey) {
-                    // تحديث حالة المرتجع الحالي بدلاً من تكراره
                     db.ref(`returns/${existingReturnKey}`).set(returnItem);
                 } else {
-                    // إنشاء مرتجع جديد لأول مرة
                     db.ref('returns').push().set(returnItem);
                 }
             } else {
-                // إذا تم تحويل الطلبية لحالة أخرى غير المرتجعات، نحذفها من أرشيف المرتجعات إن كانت موجودة به مسبقاً
                 Object.keys(appData.returns || {}).forEach(rKey => {
                     const rObj = appData.returns[rKey];
                     if (rObj.orderNumber === order.orderNumber) {
