@@ -497,7 +497,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // حل جذري: التحقق الفوري من رابط التتبع قبل أي شاشة تسجيل دخول أو تفعيل
+        // فحص رابط التتبع للزبون مباشرة قبل أي شيء آخر
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const trackOrderId = urlParams.get('track');
@@ -641,7 +641,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('track')) return; // تم التعامل مع التتبع في الأعلى
+            if (urlParams.get('track')) return;
 
             db.ref('/').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -665,6 +665,10 @@
                     if (currentUser.role === 'admin') {
                         checkAdminActivationOnLoad();
                     } else {
+                        // تحديث بيانات السائق الحالي من قاعدة البيانات لضمان دقة الهاتف
+                        if (currentUser.id && appData.drivers && appData.drivers[currentUser.id]) {
+                            currentUser.phone = appData.drivers[currentUser.id].phone || '';
+                        }
                         initAppSession();
                     }
                 } catch (e) {
@@ -1012,7 +1016,6 @@
                 const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
                 const driver = appData.drivers[o.driverId] || { name: 'غير مسند' };
 
-                // حساب صافي الأموال المحصلة للشركة (ثمن الطلبية مطروحاً منه عمولة التوصيل للسائق للدفع عند الاستلام)
                 if (o.status === 'تم التوصيل' && o.paymentMethod === 'COD') {
                     totalNetCompanyMoney += (o.price - zone.price);
                 }
@@ -1164,6 +1167,7 @@
                 if (o.driverId === currentUser.id) {
                     const zone = appData.zones[o.zoneId] || { name: 'منطقة محذوفة', price: 0 };
                     
+                    // حساب أرباح السائق (عمولة التوصيل) لأي طلبية تم توصيلها بنجاح بغض النظر عن طريقة الدفع (COD أو Online)
                     if (o.status === 'تم التوصيل') {
                         const deliveryFee = zone.price;
                         if (o.orderDate === todayStr) todayEarnings += deliveryFee;
@@ -1173,8 +1177,14 @@
                         totalDriverOrders++;
                         if (o.status === 'تم التوصيل') {
                             doneCount++;
-                            if (o.financialStatus !== 'تم الدفع' && o.paymentMethod === 'COD') {
-                                moneyToDeliver += (o.price - zone.price);
+                            if (o.financialStatus !== 'تم الدفع') {
+                                if (o.paymentMethod === 'COD') {
+                                    // إذا كان الدفع عند الاستلام، المبلغ المطلوب تسليمه للإدارة هو (ثمن الطلبية - عمولة التوصيل)
+                                    moneyToDeliver += (o.price - zone.price);
+                                } else if (o.paymentMethod === 'Online') {
+                                    // إذا كان مدفوعاً أونلاين (المبلغ 0)، فالإدارة مدينة للسائق بعمولة التوصيل أو تخصم منه (تصبح القيمة بالسالب)
+                                    moneyToDeliver -= zone.price;
+                                }
                             }
                         }
 
@@ -1193,7 +1203,6 @@
                         const waPhone = formatWhatsAppNumber(o.phone);
                         const trackLink = `${currentUrlBase}?track=${o.orderNumber}`;
                         
-                        // استخدام بيانات السائق الصحيحة والمحفوظة في الجلسة
                         const driverName = currentUser.name;
                         const driverPhone = currentUser.phone || 'غير مسجل';
                         const customerMsg = encodeURIComponent(`مرحباً ${o.customerName}، لديك طلبية برقم #${o.orderNumber} مع عامل التوصيل ${driverName} (الهاتف: ${driverPhone}). يمكنك تتبع طلبيتك مباشرة عبر الرابط التالي:\n${trackLink}`);
